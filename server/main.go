@@ -64,6 +64,8 @@ func main() {
 
 	http.HandleFunc("/v1/connections/{connection}/blocked", handlers.BlockAddressHandler)
 
+	http.HandleFunc("/v1/connections/{connection}/redirects", handlers.RedirectAddressHandler)
+
 	http.HandleFunc("/v1/connections/{connection}/reload", handlers.ReloadHandler)
 
 	fmt.Println("WebSocket server running on ws://localhost:8080/ws")
