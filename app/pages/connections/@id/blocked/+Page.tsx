@@ -3,28 +3,28 @@ import type { Data } from "./+data.js";
 import "./Page.less"
 import { useState } from "react";
 import { navigate } from "vike/client/router";
-import { onBlockAction, onReloadActions } from './RemoveBlock.telefunc.js'
+import { onBlockAction, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
   return (
-    <>
+    <main id="blocks-page">
       {DynamicComponent}
       <div>
         <h1 className="page-title">Blocked Domains</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button className="delete" onClick={async () => { await onBlockAction(data.nodeId, selected, "DELETE");setSelected([]); navigate("./blocked") }}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onBlockAction(data.nodeId, selected, "DELETE");setSelected([]); navigate("./blocked") }}>
               <Ico>delete</Ico>
             </button> : null}
-          <button className="add" onClick={() => setDynamicComponent(<AddAddressForm
+          <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
             onSubmit={() => { setDynamicComponent(<></>); navigate("./blocked") }}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
-          <button onClick={()=>onReloadActions(data.nodeId)}><Ico>save</Ico></button>
+          <button aria-label="Reload Server" data-balloon-pos="down" onClick={()=>onReloadActions(data.nodeId)}><Ico>sync</Ico></button>
         </div>
       </div>
       <ul className="domains">
@@ -54,7 +54,7 @@ export default function Page() {
 
 
       </ul>
-    </>
+    </main>
   );
 }
 
@@ -67,7 +67,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
 
     const domain = formData.get('domain')
     if (!domain) return alert("no domain");
-    await onBlockAction(data.nodeId, [domain.toString()], "POST")
+    await onBlockAction(data.nodeId, domain.toString().split(","), "POST")
     props.onSubmit()
 
   }}>

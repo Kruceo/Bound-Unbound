@@ -1,15 +1,15 @@
 // https://vike.dev/data
 
+import { redirect } from "vike/abort";
 import type { PageContextServer } from "vike/types";
 import { apiUrl } from "../../../../api/api";
 export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async (pageContext: PageContextServer) => {
-  const res = await fetch(apiUrl("/connections/" + pageContext.routeParams.id + "/blocked"))
+  const res = await fetch(apiUrl("/connections/" + pageContext.routeParams.id + "/redirects"))
   const data = await res.json() as {
     Message: string,
-    Data: { Names: string[] }
+    Data: { From: string, To: string, RecordType: string }[]
   }
-  console.log(data)
-  return { nodeId: pageContext.routeParams.id, blockedNames: data.Data.Names.sort() as string[] };
+  return { nodeId: pageContext.routeParams.id, redirects: data.Data };
 };

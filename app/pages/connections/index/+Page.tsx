@@ -4,7 +4,7 @@ import { Link } from "../../../components/Link.jsx";
 import "./Page.less"
 import { apiUrl } from "../../../api/api.js";
 import Ico from "../../../components/Ico.jsx";
-import { onReloadActions } from "../@id/blocked/RemoveBlock.telefunc.js";
+import { onReloadActions } from "../actions.telefunc.js";
 
 
 

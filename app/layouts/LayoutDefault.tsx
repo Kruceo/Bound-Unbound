@@ -31,7 +31,7 @@ function Content({ children }: { children: React.ReactNode }) {
           width: "100%",
           padding: 48,
           paddingTop:0,
-          paddingLeft: 90 + 48,
+          paddingLeft: 75 + 48,
           // paddingBottom: 50,
           display:"block",
           minHeight: "100vh",
