@@ -11,6 +11,11 @@ import (
 )
 
 func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
+
+	if len(args) < 1 {
+		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' block 'address.net'", args)
+	}
+
 	archive, err := os.OpenFile(host.BLOCK_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	scanner := bufio.NewScanner(archive)
 	archiveMap := make(map[string]struct{})
@@ -31,10 +36,6 @@ func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
 	}
 
 	defer archive.Close()
-
-	if len(args) < 1 {
-		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' block 'address.net'", args)
-	}
 
 	if unblock {
 		for _, addr := range strings.Split(args[0], ",") {

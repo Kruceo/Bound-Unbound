@@ -104,4 +104,18 @@ func HandleCommands(conn *websocket.Conn, str string) {
 			return
 		}
 	}
+	if command == "redirect" {
+		err := commands.AddRedirect(conn, id, args)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	if command == "unredirect" {
+		err := commands.RemoveRedirect(conn, id, args)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
 }
