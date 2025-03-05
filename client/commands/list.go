@@ -36,5 +36,30 @@ func List(conn *websocket.Conn, id string, args []string) error {
 		fmt.Println(response)
 		host.AddResponse(conn, id, response)
 	}
+
+	if args[0] == "redirects" {
+
+		archive, err := os.OpenFile(host.FORWARD_FILEPATH, os.O_RDONLY, 0644)
+		scanner := bufio.NewScanner(archive)
+
+		if err != nil {
+			panic(err)
+		}
+		response := ""
+		for scanner.Scan() {
+			formatedLine, found := strings.CutPrefix(scanner.Text(), "# @redirect: ")
+			if !found {
+				continue
+			}
+			splt := strings.Split(formatedLine, " ")
+			from := splt[0]
+			recordType := splt[1]
+			to := splt[2]
+			response += fmt.Sprintf("%s %s %s,", from, recordType, to)
+		}
+		response = strings.TrimSuffix(response, ",")
+		fmt.Println(response)
+		host.AddResponse(conn, id, response)
+	}
 	return nil
 }
