@@ -68,6 +68,8 @@ func main() {
 
 	http.HandleFunc("/v1/connections/{connection}/reload", handlers.ReloadHandler)
 
+	http.HandleFunc("/v1/connections/{connection}/confighash", handlers.ConfigHashHandler)
+
 	fmt.Println("WebSocket server running on ws://localhost:8080/ws")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

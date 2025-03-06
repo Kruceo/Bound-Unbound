@@ -39,8 +39,11 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 		commands.WaitForResponse(id)
 
-		var b v1.Response[[]RedirectBody]
+		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
 		for _, v := range strings.Split(commands.Responses[id], ",") {
+			if v == "" {
+				continue
+			}
 			vsplt := strings.Split(v, " ")
 			from := vsplt[0]
 			rtype := vsplt[1]

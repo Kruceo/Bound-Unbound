@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -31,6 +32,20 @@ func Add(conn *websocket.Conn, args []string) error {
 		// add connection(arg0) <id>(arg1)
 		Connections[name] = conn
 		fmt.Println(name, "connected")
+
+		go func() {
+			ticker := time.NewTicker(10 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				err := conn.WriteMessage(websocket.PingMessage, nil)
+				if err != nil {
+					delete(Connections, name)
+					fmt.Println(name, "disconnected")
+					break
+				}
+			}
+		}()
+
 	}
 
 	if args[0] == "response" {
