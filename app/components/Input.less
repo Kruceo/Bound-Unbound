@@ -3,6 +3,7 @@
 /* From Uiverse.io by alexruix */
 .input-group {
     position: relative;
+
     // margin: 0 ;
     >.input {
         border: solid 1.5px @text;
@@ -12,7 +13,8 @@
         font-size: 1rem;
         color: #f5f5f5;
         transition: border 150ms cubic-bezier(0.4, 0, 0.2, 1);
-        &::placeholder{
+
+        &::placeholder {
             // background-color: red;
             display: none;
             color: #0000;
@@ -28,19 +30,26 @@
         color: @text;
         pointer-events: none;
         transform: translateY(-50%);
-        transition: top 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms,font-size 450ms cubic-bezier(0.4, 0, 0.2, 1);
+        transition: top 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms, font-size 450ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .input:focus{
+    .input:focus {
         outline: none;
         border: 1.5px solid #1a73e8;
-        &::placeholder{
+
+        &::placeholder {
             color: @text;
             opacity: 0.5;
         }
+
+        &:invalid:not(:placeholder-shown) {
+            border: 1.5px solid #f41919;
+        }
     }
 
-    .input:focus~.user-label,.input:valid~.user-label {
+    .input:focus~.user-label,
+    .input:valid~.user-label,
+    .input:not(:placeholder-shown)~.user-label {
         top: 0%;
         transform: translateY(-50%) scale(0.8);
         background-color: @forms;
@@ -51,7 +60,7 @@
         // padding: 0px 20px;
     }
 
-    .input:focus~.user-label{
+    .input:focus~.user-label {
         color: #1a73e8;
     }
 }

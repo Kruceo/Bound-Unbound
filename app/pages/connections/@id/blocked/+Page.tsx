@@ -1,14 +1,30 @@
 import { useData } from "vike-react/useData";
 import type { Data } from "./+data.js";
 import "./Page.less"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { navigate } from "vike/client/router";
-import { onBlockAction, onReloadActions } from '../../actions.telefunc.js'
+import { onBlockAction, onGetConfigHash, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
+import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
+import Input from "../../../../components/Input.jsx";
+import { inputPatternFor } from "../../../utils.js";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
+  const [changed, setChanged] = useState(false)
+
+  useEffect(() => {
+    onGetConfigHash(data.nodeId).then(d => {
+      const key = "last-config-save-hash"
+      const storedHash = window.localStorage.getItem(key)
+      if (!storedHash) return window.localStorage.setItem(key, d.Data.Hash)
+      if (storedHash != d.Data.Hash) {
+        setChanged(true)
+      }
+    })
+  }, [data])
+
   return (
     <main id="blocks-page">
       {DynamicComponent}
@@ -16,7 +32,7 @@ export default function Page() {
         <h1 className="page-title">Blocked Domains</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onBlockAction(data.nodeId, selected, "DELETE");setSelected([]); navigate("./blocked") }}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onBlockAction(data.nodeId, selected, "DELETE"); setSelected([]); navigate("./blocked") }}>
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
@@ -24,7 +40,7 @@ export default function Page() {
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
-          <button aria-label="Reload Server" data-balloon-pos="down" onClick={()=>onReloadActions(data.nodeId)}><Ico>sync</Ico></button>
+          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data}/>
         </div>
       </div>
       <ul className="domains">
@@ -71,7 +87,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     props.onSubmit()
 
   }}>
-    <input type="text" placeholder="domain.com..." name="domain" />
+    <Input title="Domain" required type="text" placeholder="domain.com" pattern={inputPatternFor("CNAME")} name="domain" />
     <div className="b-dock">
       <button onClick={props.onCancel} type="reset" >Cancel</button>
       <button type="submit">Block</button>

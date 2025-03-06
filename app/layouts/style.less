@@ -43,7 +43,7 @@ a.button,button {
   cursor: pointer;
   &:hover {
     filter: brightness(1.25);
-    color: @forms;
+    // color: @forms;
   }
 }
 
@@ -65,8 +65,23 @@ input,select{
   }
 }
 
-form{
-  box-shadow: @boxShadow;
+*:has(>form){
+  form{
+    box-shadow: @boxShadow;
+    z-index: 999;
+  }
+  &::after{
+    background-color: #0009;
+    content: "";
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 998;
+    position: fixed;
+    
+  }
 }
 
 /* Page Transition Animation */

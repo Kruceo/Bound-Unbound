@@ -27,6 +27,9 @@ div:has(>.page-title) {
             &.delete{
                 background-color: #d42;
             }
+            &.reload.changed{
+                background-color: #f92;
+            }
             &:hover {
                 // background-color: @hovers;
                 filter: brightness(1.25);
@@ -125,7 +128,7 @@ form.add-form{
     border-radius: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 24px;
     .b-dock{
         margin-left: auto;
         gap: 12px;

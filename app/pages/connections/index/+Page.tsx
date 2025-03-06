@@ -5,6 +5,7 @@ import "./Page.less"
 import { apiUrl } from "../../../api/api.js";
 import Ico from "../../../components/Ico.jsx";
 import { onReloadActions } from "../actions.telefunc.js";
+import ControlsReloadButton from "../../../components/ControlsReloadButton.jsx";
 
 
 
@@ -22,14 +23,12 @@ export default function Page() {
               <p>{each.RemoteAddress}</p>
               <p>Unbound</p>
               <div className="bottom-bar">
-                <button aria-label="Reload Server" data-balloon-pos="down" onClick={()=>{onReloadActions(each.Name)}}>
-                  <Ico>sync</Ico>
-                </button>
+                <ControlsReloadButton nodeId={each.Name} updateIfItChanges={data} />
                 <Link aria-label="Domain Blocks" data-balloon-pos="down" className="button" href={`/connections/${each.Name}/blocked`}>
-                 <Ico>block</Ico>
-                 </Link>
+                  <Ico>block</Ico>
+                </Link>
                 <Link aria-label="Domain Redirects" data-balloon-pos="down" className="button" href={`/connections/${each.Name}/redirects`}>
-                <Ico>airline_stops</Ico>
+                  <Ico>airline_stops</Ico>
                 </Link>
               </div>
             </div>

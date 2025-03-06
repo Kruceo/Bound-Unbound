@@ -3,23 +3,18 @@ import type { Data } from "./+data.js";
 import "./Page.less"
 import { useEffect, useState } from "react";
 import { navigate } from "vike/client/router";
-import { onDeleteRedirectAction, onNewRedirectAction, onReloadActions } from '../../actions.telefunc.js'
+import { onDeleteRedirectAction, onGetConfigHash, onNewRedirectAction, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
 import Input, { Select } from "../../../../components/Input.jsx";
+import { inputPatternFor, RecordTypes } from "../../../utils.js";
+import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
-  const [haveChanges, setHaveChanges] = useState(false)
+  
 
-  useEffect(() => {
-    function handler(event: BeforeUnloadEvent) {
-      event.preventDefault();
-      event.returnValue = ""; // Necessário para exibir o alerta no Chrome
-    }
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler)
-  }, [])
+    
 
   return (
     <main id="redirects-page">
@@ -28,15 +23,15 @@ export default function Page() {
         <h1 className="page-title">Redirects</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected[0]); setSelected([]); setHaveChanges(true); navigate("./redirects") }}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected[0]); setSelected([]); navigate("./redirects") }}>
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
-            onSubmit={() => { setHaveChanges(true); setDynamicComponent(<></>); navigate("./blocked") }}
+            onSubmit={() => {setDynamicComponent(<></>); navigate(location.pathname) }}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
-          <button aria-label="Reload Server" data-balloon-pos="down" className={"reload "+ (haveChanges ? "has-changes" : "")} onClick={() => onReloadActions(data.nodeId)}><Ico>sync</Ico></button>
+          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data}/>
         </div>
       </div>
       <ul className="domains">
@@ -77,9 +72,9 @@ export default function Page() {
   );
 }
 
-
 function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
   const data = useData<Data>()
+  const [subtype, setSubtype] = useState<RecordTypes>("A")
   return <form className="add-form" action="" onSubmit={async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -92,9 +87,9 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     props.onSubmit()
 
   }}>
-    <Input title="From" required type="text" name="from" placeholder="www.domain.com" />
+    <Input title="From" required type="text" name="from" pattern={inputPatternFor("CNAME")} placeholder="www.domain.com" />
     <div className="dock">
-      <Select title="Type" required name="record-type" id="record-type">
+      <Select onChange={(e) => setSubtype(e.currentTarget.value as RecordTypes)} title="Type" required name="record-type" id="record-type">
         <option value="A">A</option>
         <option value="AAAA">AAAA</option>
         <option value="CNAME">CNAME</option>
@@ -102,7 +97,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
         <option value="MX">MX</option>
       </Select>
 
-      <Input title="To" required type="text" placeholder="domain.com..." name="to" pattern="^(?>(\d|[1-9]\d{2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(?1)$" />
+      <Input title="To" required type="text" placeholder="domain.com..." name="to" pattern={inputPatternFor(subtype)} />
     </div>
     <div className="b-dock">
       <button onClick={props.onCancel} type="reset" >Cancel</button>
@@ -110,3 +105,4 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     </div>
   </form>
 }
+

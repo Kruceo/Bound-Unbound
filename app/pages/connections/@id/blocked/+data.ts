@@ -6,6 +6,7 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async (pageContext: PageContextServer) => {
   const res = await fetch(apiUrl("/connections/" + pageContext.routeParams.id + "/blocked"))
+  console.log(res)
   const data = await res.json() as {
     Message: string,
     Data: { Names: string[] }

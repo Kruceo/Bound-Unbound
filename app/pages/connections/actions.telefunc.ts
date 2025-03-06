@@ -33,6 +33,14 @@ export async function onDeleteRedirectAction(connectionId: string, domain:string
   })
 }
 
+export async function onGetConfigHash(connectionId: string) {
+  const url = apiUrl("/connections/" + connectionId + "/confighash")
+  const res = await fetch(url, {
+    method: "GET"
+  })
+  return await res.json() as {Data:{Hash:string}}
+}
+
 
 export async function onReloadActions(connectionId: string) {
   const res = await fetch(apiUrl(`/connections/${connectionId}/reload`), { method: "POST" })
