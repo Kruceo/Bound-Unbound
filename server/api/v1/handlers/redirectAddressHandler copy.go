@@ -17,6 +17,7 @@ type RedirectBody struct {
 	From       string
 	RecordType string
 	To         string
+	LocalZone  bool
 }
 
 func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 			from := vsplt[0]
 			rtype := vsplt[1]
 			to := vsplt[2]
-			b.Data = append(b.Data, RedirectBody{From: from, RecordType: rtype, To: to})
+			localZone := vsplt[3] == "true"
+			b.Data = append(b.Data, RedirectBody{From: from, RecordType: rtype, To: to, LocalZone: localZone})
 		}
 
 		decoded, err := json.Marshal(b)
@@ -88,7 +90,7 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s redirect %s %s %s", id, b.From, b.RecordType, b.To)))
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s redirect %s %s %s %v", id, b.From, b.RecordType, b.To, b.LocalZone)))
 
 		commands.WaitForResponse(id)
 		w.Write(nil)
