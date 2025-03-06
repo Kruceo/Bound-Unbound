@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"unbound-side-client/host"
+	"unbound-side-client/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -60,6 +61,17 @@ func List(conn *websocket.Conn, id string, args []string) error {
 		response = strings.TrimSuffix(response, ",")
 		fmt.Println(response)
 		host.AddResponse(conn, id, response)
+	}
+	if args[0] == "confighash" {
+
+		hash, err := utils.CombinedFileHash([]string{host.BLOCK_FILEPATH, host.FORWARD_FILEPATH})
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+
+		fmt.Println(hash)
+		host.AddResponse(conn, id, hash)
 	}
 	return nil
 }
