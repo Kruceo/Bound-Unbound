@@ -56,7 +56,8 @@ func List(conn *websocket.Conn, id string, args []string) error {
 			from := splt[0]
 			recordType := splt[1]
 			to := splt[2]
-			response += fmt.Sprintf("%s %s %s,", from, recordType, to)
+			localZone := splt[3]
+			response += fmt.Sprintf("%s %s %s %s,", from, recordType, to, localZone)
 		}
 		response = strings.TrimSuffix(response, ",")
 		fmt.Println(response)

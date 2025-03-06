@@ -9,11 +9,13 @@ import (
 )
 
 func ReloadConfig(conn *websocket.Conn, id string) error {
-	err := exec.Command(host.RELOAD_COMMAND[0], host.RELOAD_COMMAND[1:]...).Run()
+	cmd := exec.Command(host.RELOAD_COMMAND[0], host.RELOAD_COMMAND[1:]...)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println("host reload command: " + err.Error())
 	}
 
+	fmt.Println(cmd.String(), "\n", string(out))
 	// hash, err := utils.CombinedFileHash([]string{host.BLOCK_FILEPATH, host.FORWARD_FILEPATH})
 	// if err != nil {
 	// 	fmt.Println(err)

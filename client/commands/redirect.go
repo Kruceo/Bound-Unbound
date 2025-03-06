@@ -16,7 +16,7 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 
 	// validation
 	if len(args) < 3 {
-		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' redirect 'address.net' 'A|AAAA|CNAME' 'other.address.net'", args)
+		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' redirect 'address.net' 'A|AAAA|CNAME' 'other.address.net' 'local-zone|none'", args)
 	}
 
 	typeExists, subType := utils.ValidateRecordType(args[1])
@@ -46,8 +46,9 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 	archive, err := os.OpenFile(host.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	scanner := bufio.NewScanner(archive)
 	type FRedirect struct {
-		Type string
-		To   string
+		Type      string
+		To        string
+		LocalOnly bool
 	}
 	archiveMap := make(map[string]FRedirect)
 
@@ -64,20 +65,32 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 		from := splt[0]
 		recordType := splt[1]
 		to := splt[2]
+		localOnly := false
 
-		archiveMap[from] = FRedirect{Type: recordType, To: to} // Adiciona ao mapa sem desperdiçar memória
+		if len(splt) >= 4 && splt[3] == "true" {
+			localOnly = true
+		}
+		archiveMap[from] = FRedirect{Type: recordType, To: to, LocalOnly: localOnly} // Adiciona ao mapa sem desperdiçar memória
 	}
 	// return nil
 	defer archive.Close()
 
-	archiveMap[args[0]] = FRedirect{Type: args[1], To: args[2]}
+	localOnly := false
+	if len(args) >= 4 && args[3] == "local-zone" {
+		localOnly = true
+	}
+
+	archiveMap[args[0]] = FRedirect{Type: args[1], To: args[2], LocalOnly: localOnly}
 
 	archive.Truncate(0)
 	for k, v := range archiveMap {
-		fmt.Println("writing: " + k)
-		_, err := archive.WriteString(
-			fmt.Sprintf("local-zone: \"%s\" redirect\nlocal-data: \"%s IN %s %s\"\n", k, k, v.Type, v.To) +
-				fmt.Sprintf("# @redirect: %s %s %s\n", k, v.Type, v.To))
+		res := ""
+		if v.LocalOnly {
+			res += fmt.Sprintf("local-zone: \"%s\" redirect\n", k)
+		}
+		res += fmt.Sprintf("local-data: \"%s IN %s %s\"\n", k, v.Type, v.To)
+		res += fmt.Sprintf("# @redirect: %s %s %s %v\n", k, v.Type, v.To, v.LocalOnly)
+		_, err := archive.WriteString(res)
 
 		if err != nil {
 			panic(err)
