@@ -90,7 +90,11 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s redirect %s %s %s %v", id, b.From, b.RecordType, b.To, b.LocalZone)))
+		localzoneStr := ""
+		if b.LocalZone {
+			localzoneStr = "local-zone"
+		}
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr)))
 
 		commands.WaitForResponse(id)
 		w.Write(nil)

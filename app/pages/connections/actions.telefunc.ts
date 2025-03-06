@@ -16,11 +16,11 @@ export async function onBlockAction(connectionId: string, domains: string[], act
   })
 }
 
-export async function onNewRedirectAction(connectionId: string, from: string, recordType: string, to: string) {
+export async function onNewRedirectAction(connectionId: string, from: string, recordType: string, to: string,localZone:boolean) {
   const url = apiUrl("/connections/" + connectionId + "/redirects")
   const res = await fetch(url, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-      From: from, To: to, RecordType: recordType
+      From: from, To: to, RecordType: recordType,LocalZone:localZone
     })
   })
 }

@@ -12,9 +12,9 @@ export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
-  
 
-    
+
+
 
   return (
     <main id="redirects-page">
@@ -27,11 +27,11 @@ export default function Page() {
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
-            onSubmit={() => {setDynamicComponent(<></>); navigate(location.pathname) }}
+            onSubmit={() => { setDynamicComponent(<></>); navigate(location.pathname) }}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
-          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data}/>
+          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data} />
         </div>
       </div>
       <ul className="domains">
@@ -42,6 +42,7 @@ export default function Page() {
             <p>From</p>
             <p>Type</p>
             <p>To</p>
+            <p>Local Zone</p>
           </div>
           <div className="end"></div>
         </li>
@@ -57,6 +58,7 @@ export default function Page() {
             <p>{each.From}</p>
             <p>{each.RecordType}</p>
             <p>{each.To}</p>
+            <p>{each.LocalZone ? "Yes" : "No"}</p>
             {/* <p>always_nxdomain</p> */}
           </div>
           <a target="_blank" className="end" href={"http://" + each.From}>
@@ -83,7 +85,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     const to = formData.get('to')
     const type = formData.get('record-type')
     if (!from || !to || !type) return alert("no domain");
-    await onNewRedirectAction(data.nodeId, from.toString(), type.toString(), to.toString())
+    await onNewRedirectAction(data.nodeId, from.toString(), type.toString(), to.toString(), true)
     props.onSubmit()
 
   }}>

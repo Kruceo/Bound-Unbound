@@ -9,8 +9,8 @@ export default {
   // https://vike.dev/Layout
   Layout,
   // https://vike.dev/head-tags
-  title: "Vasco",
-  description: "Demo showcasing Vike",
+  title: "Bound Unbound",
+  description: "Multiple Unbound instances manager.",
 
   extends: vikeReact,
 } satisfies Config;

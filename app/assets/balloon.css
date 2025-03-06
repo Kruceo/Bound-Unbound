@@ -6,12 +6,15 @@
     --balloon-move: 4px; }
   
   a[aria-label][data-balloon-pos],button[aria-label][data-balloon-pos] {
-    overflow: visible; }
+    overflow: visible; 
+    display: flex;
+  }
   
   [aria-label][data-balloon-pos] {
     position: relative;
     cursor: pointer; }
     [aria-label][data-balloon-pos]:after {
+      line-height: 20px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.18s ease-out 0.18s;
