@@ -2,7 +2,6 @@ package memory
 
 import (
 	"crypto/cipher"
-	"encoding/base64"
 	"fmt"
 	"unbound-mngr-host/security"
 
@@ -31,13 +30,7 @@ type Client struct {
 
 func (client Client) Send(msg string, encrypt bool) {
 	if encrypt {
-		nonce := security.RandomNonce()
-		encryptedContent := client.Cipher.Seal(nil, nonce, []byte(msg), nil)
-		formatedMsg := encryptedContent
-		formatedMsg = append(formatedMsg, nonce...)
-		// fmt.Println("DECODED", formatedMsg)
-		base64Msg := base64.RawStdEncoding.EncodeToString(formatedMsg)
-		// fmt.Println("ENCODED", []byte(base64Msg))
+		base64Msg := security.CipherMessageBase64(msg, client.Cipher)
 		client.Conn.WriteMessage(websocket.TextMessage, append([]byte("#$"), base64Msg...))
 	} else {
 		client.Conn.WriteMessage(websocket.TextMessage, []byte(msg))

@@ -121,10 +121,9 @@ func HandleCommands(conn *websocket.Conn, str string, cipher **cipher.AEAD) {
 	normalStr := str
 	decrypted := false
 	if cipher != nil && *cipher != nil {
-		if strings.HasPrefix(str, "#$") {
-			encodedStr, _ := strings.CutPrefix(normalStr, "#$")
-			// fmt.Println("ENCODED", []byte(encodedStr))
-			msg, err := security.DecipherMessageBase64Str(encodedStr, **cipher)
+		encodedStr, hasPrefix := strings.CutPrefix(normalStr, "#$")
+		if hasPrefix {
+			msg, err := security.DecipherMessageBase64(encodedStr, **cipher)
 			if err != nil {
 				fmt.Println(err)
 				return

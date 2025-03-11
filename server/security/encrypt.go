@@ -31,7 +31,7 @@ func RandomNonce() []byte {
 	return nonce
 }
 
-func DecipherMessageBase64Str(str string, cipher cipher.AEAD) ([]byte, error) {
+func DecipherMessageBase64(str string, cipher cipher.AEAD) ([]byte, error) {
 	var decodedStr []byte = make([]byte, len(str)+12)
 	n, err := base64.RawStdEncoding.Decode(decodedStr, []byte(str))
 	if err != nil {
@@ -45,4 +45,13 @@ func DecipherMessageBase64Str(str string, cipher cipher.AEAD) ([]byte, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func CipherMessageBase64(str string, cipher cipher.AEAD) []byte {
+	nonce := RandomNonce()
+	encryptedContent := cipher.Seal(nil, nonce, []byte(str), nil)
+	formatedMsg := encryptedContent
+	formatedMsg = append(formatedMsg, nonce...)
+	base64Msg := base64.RawStdEncoding.EncodeToString(formatedMsg)
+	return []byte(base64Msg)
 }
