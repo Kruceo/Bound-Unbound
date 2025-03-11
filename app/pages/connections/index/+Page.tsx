@@ -23,11 +23,11 @@ export default function Page() {
               <p>{each.RemoteAddress}</p>
               <p>Unbound</p>
               <div className="bottom-bar">
-                <ControlsReloadButton nodeId={each.Name} updateIfItChanges={data} />
-                <Link aria-label="Domain Blocks" data-balloon-pos="down" className="button" href={`/connections/${each.Name}/blocked`}>
+                <ControlsReloadButton nodeId={each.RemoteAddress} updateIfItChanges={data} />
+                <Link aria-label="Domain Blocks" data-balloon-pos="down" className="button" href={`/connections/${each.RemoteAddress}/blocked`}>
                   <Ico>block</Ico>
                 </Link>
-                <Link aria-label="Domain Redirects" data-balloon-pos="down" className="button" href={`/connections/${each.Name}/redirects`}>
+                <Link aria-label="Domain Redirects" data-balloon-pos="down" className="button" href={`/connections/${each.RemoteAddress}/redirects`}>
                   <Ico>airline_stops</Ico>
                 </Link>
               </div>
