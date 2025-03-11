@@ -6,9 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/commands"
-
-	"github.com/gorilla/websocket"
+	"unbound-mngr-host/memory"
 )
 
 func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,12 +22,12 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	connectionName := r.PathValue("connection")
-	conn := commands.Connections[connectionName]
+	client := memory.Connections[connectionName]
 	id := fmt.Sprintf("%x", rand.Int())
-	conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s list confighash", id)))
+	client.Send(fmt.Sprintf("%s list confighash", id), true)
 
-	commands.WaitForResponse(id)
-	res := commands.Responses[id]
+	memory.WaitForResponse(id)
+	res := memory.Responses[id]
 
 	var b v1.Response[HashR] = v1.Response[HashR]{Data: HashR{Hash: res}, Message: ""}
 

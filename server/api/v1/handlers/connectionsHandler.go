@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/commands"
+	"unbound-mngr-host/memory"
 )
 
 func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,8 +21,8 @@ func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 		RemoteAddress string
 	}
 	var b v1.Response[[]ConnectionR] = v1.Response[[]ConnectionR]{Data: make([]ConnectionR, 0), Message: ""}
-	for k, v := range commands.Connections {
-		b.Data = append(b.Data, ConnectionR{Name: k, RemoteAddress: v.RemoteAddr().String()})
+	for k, v := range memory.Connections {
+		b.Data = append(b.Data, ConnectionR{Name: v.Name, RemoteAddress: k})
 	}
 
 	decoded, err := json.Marshal(b)

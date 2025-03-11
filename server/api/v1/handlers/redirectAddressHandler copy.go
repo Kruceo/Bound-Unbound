@@ -8,9 +8,7 @@ import (
 	"net/http"
 	"strings"
 	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/commands"
-
-	"github.com/gorilla/websocket"
+	"unbound-mngr-host/memory"
 )
 
 type RedirectBody struct {
@@ -28,20 +26,20 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
 			return
 		}
 		id := fmt.Sprintf("%x", rand.Int())
-		conn.WriteMessage(websocket.TextMessage, []byte(id+" list redirects"))
+		client.Send(id+" list redirects", true)
 
-		commands.WaitForResponse(id)
+		memory.WaitForResponse(id)
 
 		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
-		for _, v := range strings.Split(commands.Responses[id], ",") {
+		for _, v := range strings.Split(memory.Responses[id], ",") {
 			if v == "" {
 				continue
 			}
@@ -64,8 +62,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if r.Method == "POST" {
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
@@ -94,15 +92,15 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		if b.LocalZone {
 			localzoneStr = "local-zone"
 		}
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr)))
+		client.Send(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), true)
 
-		commands.WaitForResponse(id)
+		memory.WaitForResponse(id)
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
@@ -127,9 +125,9 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
-		conn.WriteMessage(websocket.TextMessage, []byte(id+" unredirect "+b.Domain))
+		client.Send(id+" unredirect "+b.Domain, true)
 
-		commands.WaitForResponse(id)
+		memory.WaitForResponse(id)
 
 		w.Write(nil)
 		return

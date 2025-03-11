@@ -5,9 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/commands"
-
-	"github.com/gorilla/websocket"
+	"unbound-mngr-host/memory"
 )
 
 func ReloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,17 +18,17 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	connectionName := r.PathValue("connection")
-	conn := commands.Connections[connectionName]
-	if conn == nil {
+	client, exists := memory.Connections[connectionName]
+	if !exists {
 		fmt.Println("Not found:", connectionName)
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(nil)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
-	conn.WriteMessage(websocket.TextMessage, []byte(id+" reload"))
+	client.Send(id+" reload", true)
 
-	commands.WaitForResponse(id)
+	memory.WaitForResponse(id)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(nil)
