@@ -22,12 +22,18 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	connectionName := r.PathValue("connection")
-	client := memory.Connections[connectionName]
+	client, exists := memory.Connections[connectionName]
+	if !exists {
+		fmt.Println("Not found:", connectionName)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(nil)
+		return
+	}
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(fmt.Sprintf("%s list confighash", id), true)
 
 	memory.WaitForResponse(id)
-	res := memory.Responses[id]
+	res := memory.ReadResponse(id)
 
 	var b v1.Response[HashR] = v1.Response[HashR]{Data: HashR{Hash: res}, Message: ""}
 
