@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"log"
 )
 
@@ -19,15 +20,6 @@ func CreateCipher(secret []byte) cipher.AEAD {
 	}
 
 	return cipher
-
-	// encryptedMsg := mode.Seal(nil, nonce, []byte("vasco da gama"), nil)
-
-	// fmt.Printf("%x\n", encryptedMsg)
-
-	// decrypted, err := mode.Open(nil, nonce, encryptedMsg, nil)
-	// if err != nil {
-	// 	panic(err)
-	// }
 }
 
 func RandomNonce() []byte {
@@ -37,4 +29,20 @@ func RandomNonce() []byte {
 		log.Fatal(err)
 	}
 	return nonce
+}
+
+func DecipherMessageBase64Str(str string, cipher cipher.AEAD) ([]byte, error) {
+	var decodedStr []byte = make([]byte, len(str)+12)
+	n, err := base64.RawStdEncoding.Decode(decodedStr, []byte(str))
+	if err != nil {
+		return nil, err
+	}
+	decodedStr = decodedStr[:n]
+	content := decodedStr[0 : n-12]
+	nonce := decodedStr[n-12:]
+	result, err := cipher.Open(nil, nonce, content, nil)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

@@ -121,31 +121,15 @@ func HandleCommands(conn *websocket.Conn, str string, cipher **cipher.AEAD) {
 	normalStr := str
 	decrypted := false
 	if cipher != nil && *cipher != nil {
-		aedcipher := **cipher
 		if strings.HasPrefix(str, "#$") {
 			encodedStr, _ := strings.CutPrefix(normalStr, "#$")
 			// fmt.Println("ENCODED", []byte(encodedStr))
-			var decodedStr []byte = make([]byte, len(encodedStr)+12)
-			n, err := base64.RawStdEncoding.Decode(decodedStr, []byte(encodedStr))
-			if err != nil {
-				panic(err)
-			}
-			decodedStr = decodedStr[:n]
-			// fmt.Println("DECODED", decodedStr)
-			// decodedStr := []byte(encodedStr)
-			// n := len(decodedStr)
-
-			content := decodedStr[0 : n-12]
-			nonce := decodedStr[n-12:]
-			// fmt.Println(string(decodedStr))
-			// fmt.Println(string(content))
-			// fmt.Println(string(nonce), len(nonce))
-			result, err := aedcipher.Open(nil, nonce, content, nil)
+			msg, err := security.DecipherMessageBase64Str(encodedStr, **cipher)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			normalStr = string(result)
+			normalStr = string(msg)
 			decrypted = true
 		}
 	}
