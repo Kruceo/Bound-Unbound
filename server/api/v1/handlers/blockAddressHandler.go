@@ -8,9 +8,7 @@ import (
 	"net/http"
 	"strings"
 	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/commands"
-
-	"github.com/gorilla/websocket"
+	"unbound-mngr-host/memory"
 )
 
 func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,20 +21,20 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			Names []string
 		}
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
 			return
 		}
 		id := fmt.Sprintf("%x", rand.Int())
-		conn.WriteMessage(websocket.TextMessage, []byte(id+" list blocked"))
+		client.Send(id+" list blocked", true)
 
-		commands.WaitForResponse(id)
+		memory.WaitForResponse(id)
 
 		var b v1.Response[BlockedNames]
-		b.Data.Names = strings.Split(commands.Responses[id], ",")
+		b.Data.Names = strings.Split(memory.ReadResponse(id), ",")
 		if len(b.Data.Names) == 1 && b.Data.Names[0] == "" {
 			b.Data.Names = []string{}
 		}
@@ -55,8 +53,8 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			Names []string
 		}
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
@@ -81,10 +79,10 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
-		conn.WriteMessage(websocket.TextMessage, []byte(id+" block "+strings.Join(b.Names, ",")))
+		client.Send(id+" block "+strings.Join(b.Names, ","), true)
 
-		commands.WaitForResponse(id)
-
+		memory.WaitForResponse(id)
+		memory.ReadResponse(id)
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
@@ -93,8 +91,8 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			Names []string
 		}
 		connectionName := r.PathValue("connection")
-		conn := commands.Connections[connectionName]
-		if conn == nil {
+		client, exists := memory.Connections[connectionName]
+		if !exists {
 			fmt.Println("Not found:", connectionName)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write(nil)
@@ -119,10 +117,10 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
-		conn.WriteMessage(websocket.TextMessage, []byte(id+" unblock "+strings.Join(b.Names, ",")))
+		client.Send(id+" unblock "+strings.Join(b.Names, ","), true)
 
-		commands.WaitForResponse(id)
-
+		memory.WaitForResponse(id)
+		memory.ReadResponse(id)
 		w.Write(nil)
 		return
 	}

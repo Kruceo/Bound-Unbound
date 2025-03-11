@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unbound-side-client/host"
-	"unbound-side-client/utils"
+	"unbound-mngr-host/host"
+	"unbound-mngr-host/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,6 +15,7 @@ func List(conn *websocket.Conn, id string, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("wrong syntax\nuse list <blocked|redirects>")
 	}
+
 	if args[0] == "blocked" {
 
 		archive, err := os.OpenFile(host.BLOCK_FILEPATH, os.O_RDONLY, 0644)
@@ -35,7 +36,7 @@ func List(conn *websocket.Conn, id string, args []string) error {
 		}
 		response = strings.TrimSuffix(response, ",")
 		fmt.Println(response)
-		host.AddResponse(conn, id, response)
+		host.AddResponse(id, response)
 	}
 
 	if args[0] == "redirects" {
@@ -61,18 +62,21 @@ func List(conn *websocket.Conn, id string, args []string) error {
 		}
 		response = strings.TrimSuffix(response, ",")
 		fmt.Println(response)
-		host.AddResponse(conn, id, response)
+		host.AddResponse(id, response)
 	}
 	if args[0] == "confighash" {
 
 		hash, err := utils.CombinedFileHash([]string{host.BLOCK_FILEPATH, host.FORWARD_FILEPATH})
 		if err != nil {
-			fmt.Println(err)
-			panic(err)
+			return err
 		}
 
 		fmt.Println(hash)
-		host.AddResponse(conn, id, hash)
+		err = host.AddResponse(id, hash)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unbound-side-client/host"
+	"unbound-mngr-host/host"
 
 	"github.com/gorilla/websocket"
 )
@@ -56,7 +56,7 @@ func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
 		}
 	}
 
-	host.AddResponse(conn, id, "ok")
+	host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
 	return nil
 }

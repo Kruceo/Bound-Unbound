@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 	"os/exec"
-	"unbound-side-client/host"
+	"unbound-mngr-host/host"
 
 	"github.com/gorilla/websocket"
 )
@@ -36,6 +36,6 @@ func ReloadConfig(conn *websocket.Conn, id string) error {
 		fmt.Println(err)
 		data = "error"
 	}
-	host.AddResponse(conn, id, data)
+	host.AddResponse(id, data)
 	return err
 }

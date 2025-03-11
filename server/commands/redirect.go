@@ -6,8 +6,8 @@ import (
 	"net"
 	"os"
 	"strings"
-	"unbound-side-client/host"
-	"unbound-side-client/utils"
+	"unbound-mngr-host/host"
+	"unbound-mngr-host/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -102,7 +102,7 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 	// local-zone: "google.com." redirect
 	// local-data: "google.com. 3600 IN CNAME facebook.com."
 
-	host.AddResponse(conn, id, "ok")
+	host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
 	return nil
 }
@@ -164,7 +164,7 @@ func RemoveRedirect(conn *websocket.Conn, id string, args []string) error {
 		}
 	}
 
-	host.AddResponse(conn, id, "ok")
+	host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
 	return nil
 }
