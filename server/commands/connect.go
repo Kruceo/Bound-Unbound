@@ -34,7 +34,7 @@ func Connect(conn *websocket.Conn, id string, args []string) error {
 		panic(err)
 	}
 	memory.Connections[conn.RemoteAddr().String()] = memory.Client{Conn: conn, Name: name, Cipher: security.CreateCipher(sharedKey)}
-	fmt.Println(name, conn.RemoteAddr().String(), "connected")
+	fmt.Println(name, conn.LocalAddr().String(), "connected")
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
@@ -42,7 +42,7 @@ func Connect(conn *websocket.Conn, id string, args []string) error {
 		for range ticker.C {
 			err := conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
-				delete(memory.Connections, name)
+				delete(memory.Connections, conn.RemoteAddr().String())
 				fmt.Println(name, "disconnected")
 				break
 			}
