@@ -43,6 +43,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte{})
+			return
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(decoded)
@@ -67,6 +68,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("body read error: " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(nil)
+			return
 		}
 
 		var b BlockedNames
@@ -76,6 +78,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("json decode error: " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(nil)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
@@ -105,6 +108,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("body read error: " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(nil)
+			return
 		}
 
 		var b BlockedNames
@@ -114,6 +118,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("json decode error: " + err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(nil)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
