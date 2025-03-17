@@ -32,6 +32,12 @@ func main() {
 	if isHost {
 		http.HandleFunc("/ws", handleWebSocket)
 
+		http.HandleFunc("/auth/login", handlers.AuthLoginHandler)
+
+		http.HandleFunc("/auth/token", handlers.AuthClientToken)
+
+		http.HandleFunc("/auth/register", handlers.AuthRegisterHandler)
+
 		http.HandleFunc("/v1/connections", handlers.ConnectionsHandler)
 
 		http.HandleFunc("/v1/connections/{connection}/blocked", handlers.BlockAddressHandler)

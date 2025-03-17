@@ -8,14 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/argon2"
 )
-
-type APIClient struct {
-	ExpiresAt time.Time
-}
-
-var APIClients = make(map[string]APIClient, 0)
 
 const (
 	times           = 3
@@ -78,4 +73,45 @@ func VerifyPassword(password string, hash string) bool {
 	// fmt.Printf("hashcomputed %x\n", hashComputed)
 
 	return subtle.ConstantTimeCompare(hashStored, hashComputed) == 1
+}
+
+var sessionSecret []byte = []byte("only a good secret")
+
+func init() {
+	_, err := rand.Read([]byte(sessionSecret))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GenerateJWT(username string) (string, error) {
+	claims := jwt.MapClaims{
+		"sub": username,                                  // Identificação do usuário
+		"exp": time.Now().Add(time.Second * 3600).Unix(), // Expira em 1 hora
+		"iat": time.Now().Unix(),                         // Emitido em
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString(sessionSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func ValidateJWT(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("wrong signing method: %v", token.Header["alg"])
+		}
+		return sessionSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }

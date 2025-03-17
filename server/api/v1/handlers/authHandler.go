@@ -2,17 +2,12 @@ package handlers
 
 import (
 	"bufio"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 	v1 "unbound-mngr-host/api/v1"
 )
 
@@ -76,58 +71,42 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userToken := make([]byte, 64)
-	if _, err := rand.Read(userToken); err != nil {
-		panic(err)
-	}
-
-	userTokenB64 := base64.RawStdEncoding.EncodeToString(userToken)
-
-	type TokenR struct{ Token string }
-	response := v1.Response[TokenR]{Data: TokenR{Token: userTokenB64}, Message: ""}
-
-	responseEncoded, err := json.Marshal(response)
-
+	jwtToken, err := v1.GenerateJWT(b.User)
 	if err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(nil)
+		return
 	}
 
-	// expiresAt := time.Now().Add(30 * time.Second)
-	aesblock, err := aes.NewCipher([]byte("1234567890123456"))
+	t := v1.Response[string]{Data: jwtToken, Message: ""}
+	encoded, err := json.Marshal(t)
 	if err != nil {
-		panic((err))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(nil)
+		return
 	}
-	c, err := cipher.NewGCM(aesblock)
-	if err != nil {
-		panic((err))
-	}
-	encrypted := c.Seal(nil, make([]byte, 12), []byte(time.Now().String()), nil)
 
-	// APIClients[userTokenB64] = APIClient{ExpiresAt: expiresAt}
-	w.Header().Add("Set-Cookie", fmt.Sprintf("session=%s;Secure;SameSite", base64.RawStdEncoding.EncodeToString(encrypted)))
-	w.Write(responseEncoded)
+	w.Write(encoded)
 }
 
 func AuthClientToken(w http.ResponseWriter, r *http.Request) {
-
-	aesblock, _ := aes.NewCipher([]byte("1234567890123456"))
-	c, _ := cipher.NewGCM(aesblock)
 
 	if v1.CorsHandler(w, r, "GET, OPTIONS") {
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
-	for _, v := range r.CookiesNamed("session") {
-		decoded, _ := base64.RawStdEncoding.DecodeString(v.Value)
-		red, _ := c.Open(nil, make([]byte, 12), decoded, nil)
-		date, _ := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", string(red))
-		fmt.Println(date.String())
+	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	token, err := v1.ValidateJWT(string(authorization))
+	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(nil)
-
+		return
 	}
 
-	w.Write(nil)
+	fmt.Println(token.Claims.GetAudience())
+
+	w.Write([]byte("Ok"))
 }
 
 func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -166,6 +145,7 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(nil)
+		fmt.Println(err)
 		return
 	}
 
