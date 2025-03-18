@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	v1 "unbound-mngr-host/api/v1"
 	"unbound-mngr-host/api/v1/handlers"
 	"unbound-mngr-host/commands"
 	"unbound-mngr-host/host"
@@ -18,6 +19,7 @@ import (
 	"unbound-mngr-host/utils"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
 // Upgrader to upgrade HTTP to WebSocket
@@ -25,6 +27,12 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // Allow all connections (Change this for security)
 	},
+}
+
+func init() {
+	godotenv.Load(".env")
+	host.InitLocals()
+	v1.InitAuth()
 }
 
 func main() {

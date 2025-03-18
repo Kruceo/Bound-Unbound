@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"unbound-mngr-host/utils"
-
-	"github.com/joho/godotenv"
 )
 
 var FORWARD_FILEPATH string = "/opt/unbound/etc/unbound/forward_records.conf"
@@ -17,8 +15,8 @@ var UNBOUND_CONF_FILEPATH string = "/opt/unbound/etc/unbound/unbound.conf"
 var RELOAD_COMMAND = []string{"unbound-control", "reload"}
 var MAIN_SERVER_ADDRESS = "127.0.0.1:8080"
 
-func init() {
-	godotenv.Load(".env")
+func InitLocals() {
+
 	MAIN_SERVER_ADDRESS = utils.GetEnvOrDefault("MAIN_SERVER_ADDRESS", "127.0.0.1:8080")
 	RELOAD_COMMAND = strings.Split(utils.GetEnvOrDefault("UNBOUND_RELOAD_COMMAND", "unbound-control reload"), " ")
 	if os.Args[1] != "--host" {
