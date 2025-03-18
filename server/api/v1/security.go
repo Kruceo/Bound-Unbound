@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -113,5 +114,19 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
+	return token, nil
+}
+
+func JWTMiddleware(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
+
+	w.Header().Add("Content-Type", "application/json")
+	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	token, err := ValidateJWT(string(authorization))
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(nil)
+		return nil, err
+	}
 	return token, nil
 }

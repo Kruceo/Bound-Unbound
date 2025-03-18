@@ -14,6 +14,10 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := v1.JWTMiddleware(w, r); err != nil {
+		return
+	}
+
 	if r.Method != "GET" {
 		return
 	}

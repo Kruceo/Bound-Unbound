@@ -94,17 +94,18 @@ func AuthClientToken(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, OPTIONS") {
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
-	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-	token, err := v1.ValidateJWT(string(authorization))
+
+	token, err := v1.JWTMiddleware(w, r)
 	if err != nil {
 		fmt.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(nil)
 		return
 	}
 
-	fmt.Println(token.Claims.GetAudience())
+	w.Header().Add("Content-Type", "application/json")
+
+	subject, _ := token.Claims.GetSubject()
+
+	w.Header().Set("Set-Cookie", "user="+subject+"; SameSite=None; Secure")
 
 	w.Write([]byte("Ok"))
 }
