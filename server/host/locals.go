@@ -26,27 +26,24 @@ func init() {
 		BLOCK_FILEPATH = utils.GetEnvOrDefault("BLOCK_FILEPATH", "/opt/unbound/etc/unbound/block_records.conf")
 		UNBOUND_CONF_FILEPATH = utils.GetEnvOrDefault("UNBOUND_CONF_FILEPATH", "/opt/unbound/etc/unbound/unbound.conf")
 
-		_, err := os.OpenFile(FORWARD_FILEPATH, os.O_RDONLY, 0644)
-		if err != nil {
-			_, err = os.Create(FORWARD_FILEPATH)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		_, err = os.OpenFile(BLOCK_FILEPATH, os.O_RDONLY, 0644)
-		if err != nil {
-			_, err = os.Create(BLOCK_FILEPATH)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		f, err := os.OpenFile(UNBOUND_CONF_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		file, err := os.OpenFile(FORWARD_FILEPATH, os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
 			panic(err)
 		}
-		scanner := bufio.NewScanner(f)
+		defer file.Close()
+
+		file, err = os.OpenFile(BLOCK_FILEPATH, os.O_CREATE|os.O_RDONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+
+		file, err = os.OpenFile(UNBOUND_CONF_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
 
 		if err != nil {
 			panic(err)
@@ -64,8 +61,8 @@ func init() {
 			configFile += fmt.Sprintf("\n   include: %s\n", BLOCK_FILEPATH)
 			configFile += "\n\n# unbound manager configuration end\n"
 
-			f.Truncate(0)
-			f.Write([]byte(configFile))
+			file.Truncate(0)
+			file.Write([]byte(configFile))
 
 		}
 
