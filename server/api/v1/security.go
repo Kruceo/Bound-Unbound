@@ -78,18 +78,18 @@ func VerifyPassword(password string, hash string) bool {
 
 var sessionSecret []byte = []byte("only a good secret")
 
-func init() {
-	_, err := rand.Read([]byte(sessionSecret))
-	if err != nil {
-		panic(err)
-	}
-}
+// func init() {
+// 	_, err := rand.Read([]byte(sessionSecret))
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
 func GenerateJWT(username string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": username,                                  // Identificação do usuário
-		"exp": time.Now().Add(time.Second * 3600).Unix(), // Expira em 1 hora
-		"iat": time.Now().Unix(),                         // Emitido em
+		"sub": username,                                    // Identificação do usuário
+		"exp": time.Now().Add(time.Second * 233600).Unix(), // Expira em 1 hora
+		"iat": time.Now().Unix(),                           // Emitido em
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -119,13 +119,12 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 
 func JWTMiddleware(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	token, err := ValidateJWT(string(authorization))
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(nil)
+		FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return nil, err
 	}
 	return token, nil

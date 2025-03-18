@@ -16,6 +16,10 @@ type LoginR struct {
 	Password string
 }
 
+type TokenW struct {
+	Token string
+}
+
 func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "POST, OPTIONS") {
 		return
@@ -24,9 +28,7 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	var body []byte
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println("body read error: " + err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
 		return
 	}
 
@@ -34,22 +36,18 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &b)
 
 	if err != nil {
-		fmt.Println("json decode error: " + err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
 		return
 	}
 
 	if &b.Password == nil || b.Password == "" || len(b.Password) < 8 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "WRONG_LOGIN", http.StatusBadRequest)
 		return
 	}
 
 	file, err := os.OpenFile("./userdata", os.O_RDONLY, 0600)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
 		return
 	}
 
@@ -61,13 +59,11 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	rawParts := strings.Split(content, ",")
 	if len(rawParts) != 2 && rawParts[0] != b.User {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
 	if !v1.VerifyPassword(b.Password, rawParts[1]) {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
 
@@ -78,11 +74,10 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t := v1.Response[string]{Data: jwtToken, Message: ""}
+	t := v1.Response[TokenW]{Data: TokenW{Token: jwtToken}, Message: ""}
 	encoded, err := json.Marshal(t)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "JSON_ENCODE", http.StatusInternalServerError)
 		return
 	}
 
@@ -118,9 +113,7 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var body []byte
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println("body read error: " + err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
 		return
 	}
 
@@ -128,15 +121,12 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &b)
 
 	if err != nil {
-		fmt.Println("json decode error: " + err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
 		return
 	}
 
 	if &b.Password == nil || b.Password == "" || len(b.Password) < 8 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "BODY_FORMAT", http.StatusBadRequest)
 		return
 	}
 
@@ -144,17 +134,14 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, err := os.OpenFile("./userdata", os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
-		fmt.Println(err)
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
 		return
 	}
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		if scanner.Text() != "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "OVERWRITING_REGISTER", http.StatusUnauthorized)
 			return
 		}
 	}

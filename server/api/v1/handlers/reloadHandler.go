@@ -24,9 +24,7 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	connectionName := r.PathValue("connection")
 	client, exists := memory.Connections[connectionName]
 	if !exists {
-		fmt.Println("Not found:", connectionName)
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())

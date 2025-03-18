@@ -32,9 +32,7 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 		id := fmt.Sprintf("%x", rand.Int())
@@ -57,9 +55,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 		decoded, err := json.Marshal(b)
 		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte{})
+			v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+			return
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(decoded)
@@ -68,27 +65,23 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			fmt.Println("body read error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			return
 		}
 
 		var b RedirectBody
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			fmt.Println("json decode error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
@@ -105,27 +98,23 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			fmt.Println("body read error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			return
 		}
 
 		var b struct{ Domain string }
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			fmt.Println("json decode error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)

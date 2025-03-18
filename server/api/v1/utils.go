@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"net/http"
 	"unbound-mngr-host/utils"
 )
@@ -8,6 +9,24 @@ import (
 type Response[T any] struct {
 	Message string
 	Data    T
+}
+
+type ErrorResponse struct {
+	Message   string
+	ErrorCode string
+	Error     bool
+}
+
+func FastErrorResponse(w http.ResponseWriter, r *http.Request, errorCode string, statusCode int) {
+	b := ErrorResponse{Message: GetErrorMessage(errorCode), ErrorCode: errorCode, Error: true}
+	encoded, err := json.Marshal(b)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(nil)
+		return
+	}
+	w.WriteHeader(statusCode)
+	w.Write(encoded)
 }
 
 func CorsHandler(w http.ResponseWriter, r *http.Request, methods string) bool {
