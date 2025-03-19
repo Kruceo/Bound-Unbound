@@ -48,6 +48,9 @@ func ReadResponse(id string) string {
 }
 
 func WaitForResponse(id string) {
+	if _, exists := Responses[id]; exists {
+		return
+	}
 	for {
 		select {
 		case t := <-ResponseCH:

@@ -32,6 +32,8 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(string(body))
+
 	var b LoginR
 	err = json.Unmarshal(body, &b)
 
@@ -41,7 +43,7 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if &b.Password == nil || b.Password == "" || len(b.Password) < 8 {
-		v1.FastErrorResponse(w, r, "WRONG_LOGIN", http.StatusBadRequest)
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +60,7 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawParts := strings.Split(content, ",")
-	if len(rawParts) != 2 && rawParts[0] != b.User {
+	if len(rawParts) != 2 || rawParts[0] != b.User {
 		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
@@ -81,7 +83,11 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Set-Cookie", "session="+jwtToken+"; SameSite=none; Secure")
+
 	w.Write(encoded)
+
+	fmt.Println("logged")
 }
 
 func AuthClientToken(w http.ResponseWriter, r *http.Request) {
@@ -98,8 +104,11 @@ func AuthClientToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 
-	subject, _ := token.Claims.GetSubject()
-
+	subject, err := token.Claims.GetSubject()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	w.Header().Set("Set-Cookie", "user="+subject+"; SameSite=None; Secure")
 
 	w.Write([]byte("Ok"))
@@ -125,7 +134,7 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if &b.Password == nil || b.Password == "" || len(b.Password) < 8 {
+	if &b.Password == nil || len(b.Password) < 8 || len(b.User) < 1 {
 		v1.FastErrorResponse(w, r, "BODY_FORMAT", http.StatusBadRequest)
 		return
 	}

@@ -93,9 +93,9 @@ func InitAuth() {
 
 func GenerateJWT(username string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": username,                                    // Identificação do usuário
-		"exp": time.Now().Add(time.Second * 233600).Unix(), // Expira em 1 hora
-		"iat": time.Now().Unix(),                           // Emitido em
+		"sub": username,                                // Identificação do usuário
+		"exp": time.Now().Add(time.Second * 30).Unix(), // Expira em 1 hora
+		"iat": time.Now().Unix(),                       // Emitido em
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -124,16 +124,17 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 }
 
 func JWTMiddleware(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
-	if os.Args[1] == "--no-auth" {
-		return nil, nil
-	}
+
 	w.Header().Set("Content-Type", "application/json")
+
 	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	token, err := ValidateJWT(string(authorization))
+
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
 		FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
+
 		return nil, err
 	}
+
 	return token, nil
 }
