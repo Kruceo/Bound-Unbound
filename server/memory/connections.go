@@ -49,13 +49,13 @@ func ReadResponse(id string) string {
 }
 
 func WaitForResponse(id string) error {
+
 	go func() {
 		ticker := time.NewTimer(30 * time.Second)
 		defer ticker.Stop()
-
 		<-ticker.C
 		fmt.Println("timeout for", id)
-		ResponseCH <- "_TIMEOUT_"
+		ResponseCH <- "_TIMEOUT_" + id
 	}()
 
 	if _, exists := Responses[id]; exists {
@@ -63,11 +63,10 @@ func WaitForResponse(id string) error {
 	}
 
 	for t := range ResponseCH {
-		fmt.Println("t=", t)
 		if t == id {
 			break
 		}
-		if t == "_TIMEOUT_" {
+		if t == "_TIMEOUT_"+id {
 			return fmt.Errorf("timeout for response id %s", id)
 		}
 	}
