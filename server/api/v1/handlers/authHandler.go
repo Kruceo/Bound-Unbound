@@ -71,8 +71,7 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	jwtToken, err := v1.GenerateJWT(b.User)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
 
@@ -157,4 +156,30 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	file.WriteString(b.User + "," + string(passwordHash))
 	w.Write(nil)
+}
+
+type HasUserW struct {
+	AlreadyRegistered bool
+}
+
+func AuthHasUserHandler(w http.ResponseWriter, r *http.Request) {
+	if v1.CorsHandler(w, r, "GET, OPTIONS") {
+		return
+	}
+
+	var response v1.Response[HasUserW] = v1.Response[HasUserW]{Message: "", Data: HasUserW{AlreadyRegistered: false}}
+
+	file, err := os.OpenFile("./userdata", os.O_RDONLY, 0600)
+	if err == nil {
+		defer file.Close()
+		response.Data.AlreadyRegistered = true
+	}
+
+	responseEncoded, err := json.Marshal(response)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "JSON_ENCODE", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseEncoded)
 }

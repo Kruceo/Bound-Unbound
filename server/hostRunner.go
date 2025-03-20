@@ -65,9 +65,11 @@ func Run() {
 
 	http.HandleFunc("/auth/register", handlers.AuthRegisterHandler)
 
+	http.HandleFunc("/auth/status", handlers.AuthHasUserHandler)
+
 	http.HandleFunc("/v1/connections", handlers.ConnectionsHandler)
 
-	http.HandleFunc("/v1/connections/{connection}/blocked", handlers.BlockAddressHandler)
+	http.HandleFunc("/v1/connections/{connection}/blocks", handlers.BlockAddressHandler)
 
 	http.HandleFunc("/v1/connections/{connection}/redirects", handlers.RedirectAddressHandler)
 

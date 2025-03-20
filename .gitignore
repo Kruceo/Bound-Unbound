@@ -1,0 +1,4 @@
+unbound
+.env
+server/userdata
+*.test
