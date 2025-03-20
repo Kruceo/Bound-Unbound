@@ -30,7 +30,11 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(id+" reload", true)
 
-	memory.WaitForResponse(id)
+	err := memory.WaitForResponse(id)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(nil)

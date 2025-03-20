@@ -33,7 +33,12 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 		id := fmt.Sprintf("%x", rand.Int())
 		client.Send(id+" list blocked", true)
-		memory.WaitForResponse(id)
+
+		err := memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 		var b v1.Response[BlockedNames]
 
 		b.Data.Names = strings.Split(memory.ReadResponse(id), ",")
@@ -48,6 +53,7 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(encoded)
+		// }()
 		return
 	} else if r.Method == "POST" {
 
@@ -84,7 +90,11 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 		id := fmt.Sprintf("%X", rand.Int())
 		client.Send(id+" block "+strings.Join(b.Names, ","), true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 		memory.ReadResponse(id)
 		w.Write(nil)
 		return
@@ -118,7 +128,11 @@ func BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 		id := fmt.Sprintf("%X", rand.Int())
 		client.Send(id+" unblock "+strings.Join(b.Names, ","), true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 		memory.ReadResponse(id)
 		w.Write(nil)
 		return

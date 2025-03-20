@@ -34,7 +34,11 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(fmt.Sprintf("%s list confighash", id), true)
 
-	memory.WaitForResponse(id)
+	err := memory.WaitForResponse(id)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+		return
+	}
 	res := memory.ReadResponse(id)
 
 	var b v1.Response[HashR] = v1.Response[HashR]{Data: HashR{Hash: res}, Message: ""}

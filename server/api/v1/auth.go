@@ -93,9 +93,9 @@ func InitAuth() {
 
 func GenerateJWT(username string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": username,                                // Identificação do usuário
-		"exp": time.Now().Add(time.Second * 30).Unix(), // Expira em 1 hora
-		"iat": time.Now().Unix(),                       // Emitido em
+		"sub": username,
+		"exp": time.Now().Add(time.Second * 3600).Unix(),
+		"iat": time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

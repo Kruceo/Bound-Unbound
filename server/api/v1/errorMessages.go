@@ -10,6 +10,7 @@ var ErrorMessages = map[string]string{
 	"BODY_FORMAT":          "Invalid request body format",
 	"UNKNOWN_NODE":         "Unknown node identifier",
 	"NODE_CONNECTION":      "Failed to connect to node",
+	"NODE_RESPONSE":        "Failed to get response from to node",
 }
 
 func GetErrorMessage(code string) string {

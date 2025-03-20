@@ -38,7 +38,11 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		id := fmt.Sprintf("%x", rand.Int())
 		client.Send(id+" list redirects", true)
 
-		memory.WaitForResponse(id)
+		err := memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 
 		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
 		for _, v := range strings.Split(memory.Responses[id], ",") {
@@ -91,7 +95,11 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		client.Send(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
@@ -120,7 +128,11 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		id := fmt.Sprintf("%X", rand.Int()*1000)
 		client.Send(id+" unredirect "+b.Domain, true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 
 		w.Write(nil)
 		return
