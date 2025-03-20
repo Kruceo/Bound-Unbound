@@ -1,4 +1,4 @@
 unbound
 .env
-server/userdata
+userdata
 *.test

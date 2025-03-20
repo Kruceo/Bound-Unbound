@@ -17,8 +17,7 @@ The project make the management of multiple Unbound servers easy, concentrating 
 
 - ❌ Modify Unbound configuration remotely
 - ❌ Timed Rules
-- ❌ Roles
-
+- ❌ TOTP for two factor authentication
 
 ## Running host
 
