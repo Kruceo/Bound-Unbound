@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"bufio"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,8 +34,6 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(string(body))
-
 	var b LoginR
 	err = json.Unmarshal(body, &b)
 
@@ -53,14 +53,14 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scanner := bufio.NewScanner(file)
-	content := ""
-	for scanner.Scan() {
-		content += scanner.Text()
+	content, err := io.ReadAll(file)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
+		return
 	}
 
-	rawParts := strings.Split(content, ",")
-	if len(rawParts) != 2 || rawParts[0] != b.User {
+	rawParts := strings.Split(string(content), ",")
+	if len(rawParts) != 3 || rawParts[0] != b.User {
 		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
@@ -113,6 +113,10 @@ func AuthClientToken(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Ok"))
 }
 
+type RegisterW struct {
+	SecretCode string
+}
+
 func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "POST, OPTIONS") {
 		return
@@ -154,8 +158,20 @@ func AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	file.WriteString(b.User + "," + string(passwordHash))
-	w.Write(nil)
+	extraSecretCode := make([]byte, 12)
+	rand.Read(extraSecretCode)
+
+	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
+	hashedSecretCode := v1.HashPassword(extraSecretCodeB64)                     // hashed (store it)
+	file.WriteString(fmt.Sprintf("%s,%s,%s", b.User, string(passwordHash), hashedSecretCode))
+
+	var res v1.Response[RegisterW] = v1.Response[RegisterW]{Message: "", Data: RegisterW{SecretCode: extraSecretCodeB64}}
+	encodedRes, err := json.Marshal(res)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+		return
+	}
+	w.Write(encodedRes)
 }
 
 type HasUserW struct {
@@ -178,6 +194,63 @@ func AuthHasUserHandler(w http.ResponseWriter, r *http.Request) {
 	responseEncoded, err := json.Marshal(response)
 	if err != nil {
 		v1.FastErrorResponse(w, r, "JSON_ENCODE", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(responseEncoded)
+}
+
+func AuthResetAccountHandler(w http.ResponseWriter, r *http.Request) {
+	if v1.CorsHandler(w, r, "POST, OPTIONS") {
+		return
+	}
+
+	var body []byte
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+		return
+	}
+
+	var b RegisterW
+	err = json.Unmarshal(body, &b)
+
+	if err != nil {
+		v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+		return
+	}
+
+	file, err := os.OpenFile("./userdata", os.O_RDONLY, 0600)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
+		return
+	}
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
+		return
+	}
+
+	rawParts := strings.Split(string(content), ",")
+	if len(rawParts) != 3 {
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+	if !v1.VerifyPassword(b.SecretCode, rawParts[2]) {
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	responseEncoded, err := json.Marshal(v1.Response[bool]{Message: "ok", Data: true})
+	if err != nil {
+		v1.FastErrorResponse(w, r, "JSON_ENCODE", http.StatusInternalServerError)
+		return
+	}
+
+	err = os.Remove("userdata")
+	if err != nil {
+		v1.FastErrorResponse(w, r, "LOGIN", http.StatusInternalServerError)
 		return
 	}
 

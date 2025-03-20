@@ -67,6 +67,8 @@ func Run() {
 
 	http.HandleFunc("/auth/status", handlers.AuthHasUserHandler)
 
+	http.HandleFunc("/auth/reset", handlers.AuthResetAccountHandler)
+
 	http.HandleFunc("/v1/connections", handlers.ConnectionsHandler)
 
 	http.HandleFunc("/v1/connections/{connection}/blocks", handlers.BlockAddressHandler)

@@ -31,6 +31,7 @@ func parseParams(timeStr, memoryStr, threadsStr, keyLenStr string) (uint32, uint
 	return time, memory, threads, keyLen
 }
 
+// Output is base64
 func HashPassword(password string) []byte {
 	salt := make([]byte, saltLen)
 	_, err := rand.Read(salt)
@@ -53,10 +54,14 @@ func HashPassword(password string) []byte {
 	return []byte(hashString)
 }
 
+// input is base64
 func VerifyPassword(password string, hash string) bool {
 
 	// time$availableMemomy$threads$saltLen$salt(b64)$hash(b64)
 	parts := strings.Split(hash, "$")
+	if len(parts) != 6 {
+		return false
+	}
 	time, memory, threads, keyLen := parseParams(parts[0], parts[1], parts[2], parts[3])
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
