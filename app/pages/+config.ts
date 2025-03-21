@@ -7,7 +7,7 @@ import Layout from "../layouts/LayoutDefault.jsx";
 
 export default {
   // https://vike.dev/Layout
-  Layout,
+  // Layout,
   // https://vike.dev/head-tags
   title: "Bound Unbound",
   description: "Multiple Unbound instances manager.",

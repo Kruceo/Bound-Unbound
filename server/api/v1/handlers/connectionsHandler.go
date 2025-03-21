@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	v1 "unbound-mngr-host/api/v1"
 	"unbound-mngr-host/memory"
@@ -10,6 +9,10 @@ import (
 
 func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, OPTIONS") {
+		return
+	}
+
+	if _, err := v1.JWTMiddleware(w, r); err != nil {
 		return
 	}
 
@@ -27,9 +30,8 @@ func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoded, err := json.Marshal(b)
 	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte{})
+		v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(decoded)

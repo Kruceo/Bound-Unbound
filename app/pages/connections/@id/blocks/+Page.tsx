@@ -1,7 +1,7 @@
 import { useData } from "vike-react/useData";
 import type { Data } from "./+data.js";
 import "./Page.less"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { navigate } from "vike/client/router";
 import { onBlockAction, onGetConfigHash, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
@@ -12,19 +12,7 @@ export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
-  const [changed, setChanged] = useState(false)
-
-  useEffect(() => {
-    onGetConfigHash(data.nodeId).then(d => {
-      const key = "last-config-save-hash"
-      const storedHash = window.localStorage.getItem(key)
-      if (!storedHash) return window.localStorage.setItem(key, d.Data.Hash)
-      if (storedHash != d.Data.Hash) {
-        setChanged(true)
-      }
-    })
-  }, [data])
-
+ 
   return (
     <main id="blocks-page">
       {DynamicComponent}
@@ -36,7 +24,7 @@ export default function Page() {
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
-            onSubmit={() => { setDynamicComponent(<></>); navigate("./blocked") }}
+            onSubmit={() => { setDynamicComponent(<></>); navigate("./blocks") }}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>

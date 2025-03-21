@@ -3,6 +3,7 @@ package memory
 import (
 	"crypto/cipher"
 	"fmt"
+	"time"
 	"unbound-mngr-host/security"
 
 	"github.com/gorilla/websocket"
@@ -47,13 +48,27 @@ func ReadResponse(id string) string {
 	return response
 }
 
-func WaitForResponse(id string) {
-	for {
-		select {
-		case t := <-ResponseCH:
-			if t == id {
-				return
-			}
+func WaitForResponse(id string) error {
+
+	go func() {
+		ticker := time.NewTimer(30 * time.Second)
+		defer ticker.Stop()
+		<-ticker.C
+		fmt.Println("timeout for", id)
+		ResponseCH <- "_TIMEOUT_" + id
+	}()
+
+	if _, exists := Responses[id]; exists {
+		return nil
+	}
+
+	for t := range ResponseCH {
+		if t == id {
+			break
+		}
+		if t == "_TIMEOUT_"+id {
+			return fmt.Errorf("timeout for response id %s", id)
 		}
 	}
+	return nil
 }

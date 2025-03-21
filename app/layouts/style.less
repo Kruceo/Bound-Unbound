@@ -1,98 +1,33 @@
-/* Links */
-// @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+@import url('https://fonts.cdnfonts.com/css/sf-pro-display');
 @import "https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap";
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=add_box,airline_stops,block,delete,host,language,save,sync,turn_right");
-// 
-@background: #131212;
-@forms: rgb(45, 42, 46);
-@text: #d3d3e0;
-@buttons: darken(@forms,10%);
+
+// @background: #131212;
+// @forms: rgba(45, 42, 46, 0.5);
+// @text: #d3d3e0;
+// @buttons: darken(@forms, 10%);
+// @hovers: #f50;
+// @boxShadow: #0003 3px 6px 9px,
+//   rgba(255, 255, 255, 0.1) 1px 1px 3px inset,
+//   rgba(255, 255, 255, 0.05) -1px -1px 3px inset;
+
+@background: darken(#f0f0f0, 2.5%);
+@forms: #f0f0f0;
+@text: #515153;
+@buttons: darken(@forms, 10%);
+// @buttons:;
 @hovers: #f50;
-@boxShadow: #0003 3px 6px 9px,
-  rgba(255, 255, 255,0.1) 1px 1px 3px inset, 
-  rgba(255, 255, 255, 0.05) -1px -1px 3px inset;
+@boxShadow: rgba(124, 124, 124, 0.2) 3px 6px 16px,
+  rgba(255, 255, 255, 0.5) 1px 1px 2px inset,
+  rgba(184, 184, 184, 0.5) -1px -1px 2px inset;
 
-body{
-  font-size: 18px;
-  line-height: 28px;
-  background-color: @background;
-}
+@boxShadow2: rgba(255, 255, 255, 0.5) 1px 1px 2px inset,
+  rgba(184, 184, 184, 0.5) -1px -1px 2px inset;
+@backdrop: blur(10px);
+@details: #25b5e0;
+@onDetails:#efefea;
 
-a {
-  text-decoration: none;
-  // border: 1px solid #0003;
-  // border-radius: 12px;
-  // padding: 6px;
-  cursor: pointer;
-  text-align: center;
-
-  &:hover {
-    color: @hovers;
-  }
-}
-
-a.button,button {
-  // border: 1px solid #0003;
-  border: none;
-  border-radius: 12px;
-  padding: 12px;
-  background-color: @buttons;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  &:hover {
-    filter: brightness(1.25);
-    // color: @forms;
-  }
-}
-
-* {
-  box-sizing: border-box;
-  color: @text;
-  font-family: SF Pro Display, Lato;
-}
-
-input,select{
-  background-color: transparent;
-  border: none;
-  border: 1px solid @text;
-  outline: none;
-  border-radius: 12px;
-  padding: 12px;
-  option{
-    background-color: @forms;
-  }
-}
-
-*:has(>form){
-  form{
-    box-shadow: @boxShadow;
-    z-index: 999;
-  }
-  &::after{
-    background-color: #0009;
-    content: "";
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    left: 0;
-    top: 0;
-    z-index: 998;
-    position: fixed;
-    
-  }
-}
-
-/* Page Transition Animation */
-#page-content {
-  opacity: 1;
-  transition: opacity 0.3s ease-in-out;
-}
-
-body.page-is-transitioning #page-content {
-  opacity: 0;
-}
+@bad:rgb(255, 67, 61);
 
 @desktop: ~ "(max-width: 968px)";
 

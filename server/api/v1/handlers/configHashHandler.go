@@ -14,6 +14,10 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := v1.JWTMiddleware(w, r); err != nil {
+		return
+	}
+
 	if r.Method != "GET" {
 		return
 	}
@@ -24,24 +28,25 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	connectionName := r.PathValue("connection")
 	client, exists := memory.Connections[connectionName]
 	if !exists {
-		fmt.Println("Not found:", connectionName)
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(fmt.Sprintf("%s list confighash", id), true)
 
-	memory.WaitForResponse(id)
+	err := memory.WaitForResponse(id)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+		return
+	}
 	res := memory.ReadResponse(id)
 
 	var b v1.Response[HashR] = v1.Response[HashR]{Data: HashR{Hash: res}, Message: ""}
 
 	decoded, err := json.Marshal(b)
 	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte{})
+		v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(decoded)

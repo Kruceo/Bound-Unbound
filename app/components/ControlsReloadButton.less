@@ -1,16 +1,21 @@
+@import "../layouts/style.less";
+
 .reload-button.changed{
     // background-color: #f92!important;
-    animation: warn 2s infinite;
+    animation: warn 1s infinite;
 }
 
 @keyframes warn {
     0%{
-        background-color: #f92;
+        // @details:#000;
+        outline: 1px solid @details;
+        outline-offset: -1px;
+     
     }
-    50%{
-        background-color: #555;
-    }
-    100%{
-        background-color: #f92;
+    
+    30%{
+        // background-color: #f92;
+        // background: @details;
+        outline-offset: 3px;
     }
 }

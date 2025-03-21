@@ -23,20 +23,26 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := v1.JWTMiddleware(w, r); err != nil {
+		return
+	}
+
 	if r.Method == "GET" {
 
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 		id := fmt.Sprintf("%x", rand.Int())
 		client.Send(id+" list redirects", true)
 
-		memory.WaitForResponse(id)
+		err := memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 
 		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
 		for _, v := range strings.Split(memory.Responses[id], ",") {
@@ -53,9 +59,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 		decoded, err := json.Marshal(b)
 		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte{})
+			v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+			return
 		}
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(decoded)
@@ -64,27 +69,23 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			fmt.Println("body read error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			return
 		}
 
 		var b RedirectBody
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			fmt.Println("json decode error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
@@ -94,40 +95,44 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		client.Send(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
 		connectionName := r.PathValue("connection")
 		client, exists := memory.Connections[connectionName]
 		if !exists {
-			fmt.Println("Not found:", connectionName)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			fmt.Println("body read error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			return
 		}
 
 		var b struct{ Domain string }
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			fmt.Println("json decode error: " + err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(nil)
+			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			return
 		}
 
 		id := fmt.Sprintf("%X", rand.Int()*1000)
 		client.Send(id+" unredirect "+b.Domain, true)
 
-		memory.WaitForResponse(id)
+		err = memory.WaitForResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
 
 		w.Write(nil)
 		return

@@ -1,3 +1,4 @@
+import axios, { AxiosInstance } from 'axios'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -8,5 +9,7 @@ const proto = process.env.API_PROTO ?? "http"
 
 
 export function apiUrl(pathRoute: string) {
-    return `${proto}://${address}:${port}/v1${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
+    return `${proto}://${address}:${port}${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
 }
+
+export let apiAxios = axios.create({ headers: { Authorization: "no bearer" } })

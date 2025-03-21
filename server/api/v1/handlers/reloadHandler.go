@@ -13,6 +13,10 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := v1.JWTMiddleware(w, r); err != nil {
+		return
+	}
+
 	if r.Method != "POST" {
 		return
 	}
@@ -20,15 +24,17 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	connectionName := r.PathValue("connection")
 	client, exists := memory.Connections[connectionName]
 	if !exists {
-		fmt.Println("Not found:", connectionName)
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(nil)
+		v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(id+" reload", true)
 
-	memory.WaitForResponse(id)
+	err := memory.WaitForResponse(id)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(nil)
