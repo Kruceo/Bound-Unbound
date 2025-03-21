@@ -2,22 +2,24 @@
 
 import type { PageContextServer } from "vike/types";
 import { apiAxios, apiUrl } from "../../../../api/api";
-import axios from "axios";
 import { redirect, render } from "vike/abort";
+import axios from "axios";
 export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async (pageContext: PageContextServer) => {
-  const url = apiUrl(`/v1/connections/${pageContext.routeParams.id}/redirects`)
+  const url = apiUrl(`v1/connections/${pageContext.routeParams.id}/blocks`)
   const res = await apiAxios.get(url)
+
   if(res.status == axios.HttpStatusCode.Unauthorized){
     throw redirect("/auth/signin")
   }
   else if(res.status != 200){
     throw render(500,res.statusText)
   }
+
   const data = res.data as {
     Message: string,
-    Data: { From: string, To: string, RecordType: string, LocalZone: boolean }[]
+    Data: { Names: string[] }
   }
-  return { nodeId: pageContext.routeParams.id, redirects: data.Data };
+  return { nodeId: pageContext.routeParams.id, blockedNames: data.Data.Names.sort() as string[] };
 };
