@@ -13,6 +13,5 @@ export const data = async () => {
   // console.log(await res.text())
   const data = await res.json() as { Message: string, Data: { Name: string,RemoteAddress:string }[] }
 
-  console.log(data)
   return data;
 };
