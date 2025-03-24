@@ -1,13 +1,26 @@
 import { AxiosError } from 'axios'
 import { apiAxios, apiUrl } from '../../api/api'
 
-export async function onBlockAction(connectionId: string, domains: string[]) {
+export async function onUnblockAction(connectionId: string, domains: string[]) {
   const url = apiUrl(`v1/connections/${connectionId}/blocks`)
-  console.log(url)
   try {
     const res = await apiAxios.delete(url, {
       headers: { "Content-Type": "application/json" },
       data: { Names: domains },
+    })
+    return await res.data
+  } catch (error) {
+    return (error as AxiosError).response?.data
+  }
+}
+
+export async function onBlockAction(connectionId: string, domains: string[]) {
+  const url = apiUrl(`v1/connections/${connectionId}/blocks`)
+  try {
+    const res = await apiAxios.post(url, {
+      Names: domains
+    }, {
+      headers: { "Content-Type": "application/json" }
     })
     return await res.data
   } catch (error) {

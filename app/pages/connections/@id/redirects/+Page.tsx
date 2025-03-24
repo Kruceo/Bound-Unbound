@@ -24,7 +24,7 @@ export default function Page() {
         <h1 className="page-title">Redirects</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected[0]); setSelected([]); navigate("./redirects") }}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected); setSelected([]); navigate("./redirects") }}>
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
@@ -65,6 +65,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     const type = formData.get('record-type')
     if (!from || !to || !type) return alert("no domain");
     await onNewRedirectAction(data.nodeId, from.toString(), type.toString(), to.toString(), true)
+    navigate("./redirects")
     props.onSubmit()
 
   }}>
