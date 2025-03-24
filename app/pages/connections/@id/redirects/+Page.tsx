@@ -8,6 +8,7 @@ import Ico from "../../../../components/Ico.jsx";
 import Input, { Select } from "../../../../components/Input.jsx";
 import { inputPatternFor, RecordTypes } from "../../../utils.js";
 import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
+import Table from "../../../../components/Table.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
@@ -34,42 +35,20 @@ export default function Page() {
           <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data} />
         </div>
       </div>
-      <ul className="domains">
-        <li className="header">
-          {/* <header> */}
-          <input type="checkbox" onChange={(e) => e.currentTarget.checked ? setSelected(data.redirects.map(e => e.From)) : setSelected([])} />
-          <div className="table-row">
-            <p>From</p>
-            <p>Type</p>
-            <p>To</p>
-            <p>Local Zone</p>
-          </div>
-          <div className="end"></div>
-        </li>
-        {/* {data.blockedNames.length} */}
-        {data.redirects.map(each => <li className="domain" key={each.From}>
 
-          <input type="checkbox"
-            checked={selected.includes(each.From)}
-            onChange={(e) => !e.currentTarget.checked ? setSelected(selected.filter(f => f != each.From)) : setSelected([...selected, each.From])}
-          />
-          {/* <input className="apple-switch" type="checkbox" defaultChecked /> */}
-          <div className="table-row">
-            <p>{each.From}</p>
-            <p>{each.RecordType}</p>
-            <p>{each.To}</p>
-            <p>{each.LocalZone ? "Yes" : "No"}</p>
-            {/* <p>always_nxdomain</p> */}
-          </div>
-          <a target="_blank" className="end" href={"http://" + each.From}>
-            <span className="material-symbols-outlined">
-              language
-            </span>
-          </a>
-        </li>)}
-
-
-      </ul>
+      {/* {data.blockedNames.length} */}
+      <Table
+        select={{ selected, setSelected, uniqueKey: "From" }}
+        data={data.redirects.map(e => ({
+          ...e,
+           buttons: () => <a target="_blank" href={`http://${e.From}`} className="table-button"><Ico>language</Ico></a>
+        }))}
+        headers={[
+          { acessor: "From", name: "From", width: 3 },
+          { acessor: "RecordType", name: "Type", width: 3 },
+          { acessor: "To", name: "To", width: 3 },
+          { acessor: 'buttons', name: "" }]}>
+      </Table>
     </main>
   );
 }

@@ -21,5 +21,5 @@ export const data = async (pageContext: PageContextServer) => {
     Message: string,
     Data: { Names: string[] }
   }
-  return { nodeId: pageContext.routeParams.id, blockedNames: data.Data.Names.sort() as string[] };
+  return { nodeId: pageContext.routeParams.id, blockedNames: data.Data.Names as string[] };
 };

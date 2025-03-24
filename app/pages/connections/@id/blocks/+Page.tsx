@@ -8,11 +8,12 @@ import Ico from "../../../../components/Ico.jsx";
 import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
 import Input from "../../../../components/Input.jsx";
 import { inputPatternFor } from "../../../utils.js";
+import Table, { TableCell, TableRow } from "../../../../components/Table.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
- 
+
   return (
     <main id="blocks-page">
       {DynamicComponent}
@@ -28,36 +29,15 @@ export default function Page() {
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
-          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data}/>
+          <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data} />
         </div>
       </div>
-      <ul className="domains">
-        <li className="header">
-          {/* <header> */}
-          <input type="checkbox" onChange={(e) => e.currentTarget.checked ? setSelected(data.blockedNames) : setSelected([])} />
-          <p>Domain</p>
-        </li>
-        {/* {data.blockedNames.length} */}
-        {data.blockedNames.map(each => <li className="domain" key={each}>
-
-          <input type="checkbox"
-            checked={selected.includes(each)}
-            onChange={(e) => !e.currentTarget.checked ? setSelected(selected.filter(f => f != each)) : setSelected([...selected, each])}
-          />
-          {/* <input className="apple-switch" type="checkbox" defaultChecked /> */}
-          <div className="table-row">
-            <p>{each}</p>
-            {/* <p>always_nxdomain</p> */}
-          </div>
-          <a target="_blank" href={"http://" + each}>
-            <span className="material-symbols-outlined">
-              language
-            </span>
-          </a>
-        </li>)}
-
-
-      </ul>
+      <Table select={{ selected, setSelected, uniqueKey: "domain" }} data={data.blockedNames.map(e => ({
+        domain: e,
+        buttons: () => <a target="_blank" href={`http://${e}`} className="table-button"><Ico>language</Ico></a>
+      }))
+      } headers={[{ acessor: "domain", name: "Domain", width: 5 }, { acessor: 'buttons', name: ""}]}>
+      </Table>
     </main>
   );
 }
