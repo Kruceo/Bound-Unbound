@@ -18,7 +18,7 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
       onAuthToken().then(d => {
         if (!d) navigate("/auth/signin")
         else setLogged(true)
-      }).catch((r) => alert(r))
+      }).catch(() => navigate("/auth/signin"))
     })
 
   }, [])
