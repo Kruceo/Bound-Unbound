@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"unbound-mngr-host/api/v1/handlers"
+	"unbound-mngr-host/commands"
 	"unbound-mngr-host/memory"
 
 	"github.com/gorilla/websocket"
@@ -47,7 +48,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		cipher := memory.Connections[conn.RemoteAddr().String()].Cipher
 		cptr := &cipher
-		HandleCommands(conn, string(msg), &cptr)
+		commands.HandleCommands(conn, string(msg), &cptr)
 		// err = conn.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			fmt.Println("Write error:", err)

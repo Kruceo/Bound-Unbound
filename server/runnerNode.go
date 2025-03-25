@@ -11,7 +11,8 @@ import (
 	"math/rand"
 	"os"
 	"time"
-	"unbound-mngr-host/host"
+	"unbound-mngr-host/commands"
+	"unbound-mngr-host/enviroment"
 	"unbound-mngr-host/memory"
 	"unbound-mngr-host/security"
 	"unbound-mngr-host/utils"
@@ -20,7 +21,7 @@ import (
 )
 
 func connectWebsocket() *websocket.Conn {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws", host.MAIN_SERVER_ADDRESS), nil)
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws", enviroment.MAIN_SERVER_ADDRESS), nil)
 	if err != nil {
 		fmt.Println("Connection error:", err)
 		return nil
@@ -66,7 +67,7 @@ func Run() {
 				cipher = nil
 				memory.RemoveHost()
 			} else {
-				HandleCommands(conn, string(msg), &cipher)
+				commands.HandleCommands(conn, string(msg), &cipher)
 			}
 
 		}
@@ -77,6 +78,6 @@ func Run() {
 		fmt.Print("\n>: ")
 		scanner.Scan()
 		text := scanner.Text()
-		HandleCommands(conn, "local "+text, &cipher)
+		commands.HandleCommands(conn, "local "+text, &cipher)
 	}
 }
