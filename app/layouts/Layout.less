@@ -1,4 +1,7 @@
 @import "./style.less";
+@import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+@import "https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap";
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=add_box,airline_stops,block,delete,host,language,save,sync,turn_right");
 
 body {
     font-size: 18px;
@@ -49,24 +52,26 @@ body {
   
   a.button,
   button {
-    // border: 1px solid #0003;
-    border: none;
+    border: 1px solid fade(@details,40);
+    background-color: transparent;
     border-radius: 12px;
-    padding: 12px;
-    background: linear-gradient(lighten(@details, 2.5%), @details);
-    color: @onDetails!important;
+    padding: 8px;
     box-shadow: @boxShadow2;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     font-weight: 500;
+    color: @details!important; 
     *{
-      color: @onDetails!important;
+      color: @details!important;
     }
     &:hover {
-      filter: brightness(1.25);
-      
+      filter: brightness(1.50);
+      // background-color: fade(#000,50);
+      // box-shadow: 0px 0px 10px currentColor;
+      // color: @onDetails!important;
+      // *{color: @onDetails!important;}
     }
   }
   
@@ -219,4 +224,16 @@ body {
   }
       
       
-  
+
+  .table{
+    >.t-header{
+      border-bottom: 1px solid fade(@text, 15);
+    }
+    >.t-row .table-button{
+        // border: red 1px solid;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        *{color: @text!important;}
+    }
+}

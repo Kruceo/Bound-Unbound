@@ -6,14 +6,15 @@ import "./ControlsReloadButton.less";
 export default function ControlsReloadButton(props: { className?: string, nodeId: string, updateIfItChanges: any }) {
     const key = props.nodeId + "-last-confighash"
     const [changed, setChanged] = useState(false)
+    const [problemWithNode, setProblemWithNode] = useState(false)
     useEffect(() => {
         onGetConfigHash(props.nodeId).then(d => {
             const storedHash = window.localStorage.getItem(key)
-            if (!storedHash) return window.localStorage.setItem(key, d.Data.Hash)
-            if (storedHash != d.Data.Hash) {
-                setChanged(true)
-            }
+            if (!storedHash && d.Data) return window.localStorage.setItem(key, d.Data.Hash)
+            if (d.Data && storedHash != d.Data.Hash) return setChanged(true)
+            if (d.Error)
+                setProblemWithNode(true)
         })
     }, [props.updateIfItChanges])
-    return <button className={"reload-button " + (props.className ? props.className : "") + (changed ? "changed" : "")} aria-label="Reload Server" data-balloon-pos="down" onClick={() => { onReloadActions(props.nodeId); window.localStorage.removeItem(key); setChanged(false); navigate(window.location.pathname) }}><Ico>sync</Ico></button>
+    return <button disabled={problemWithNode} className={`reload-button ${(props.className ? props.className : "")} ${(changed ? "changed" : "")} ${problemWithNode ? "problem" : ""}`} aria-label="Reload Server" data-balloon-pos="down" onClick={() => { onReloadActions(props.nodeId); window.localStorage.removeItem(key); setChanged(false); navigate(window.location.pathname) }}><Ico>sync</Ico></button>
 }

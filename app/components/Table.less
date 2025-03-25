@@ -1,0 +1,76 @@
+ul.table {
+    // background-color: @forms;
+    padding: 0;
+    margin: 0;
+    display: grid;
+
+    .t-header {
+        list-style: none;
+        width: 100%;
+        // border-bottom: 1px solid #000;
+        display: flex;
+        padding-bottom: 12px;
+        input{
+            padding: 12px;
+        }
+        .row {
+            width: 100%;
+            display: grid;
+
+            .t-cell {
+                padding: 0px 12px;
+                display: flex;
+                gap: 6px;
+                font-weight: bold;
+                align-items: center;
+
+                .title {
+                    user-select: none;
+                    cursor: pointer;
+
+                    ~.order {
+                        display: none;
+                        // font-size: 4px;
+                    }
+
+                    &:hover {
+                        ~.order {
+                            display: inline-block;
+
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    .t-row {
+        list-style: none;
+        display: flex;
+        >input{
+
+        }
+        .row {
+            width: 100%;
+            display: grid;
+
+            .t-cell {
+                // border-right: 1px solid black;
+                padding: 12px;
+                text-overflow: ellipsis;
+                // white-space: wrap;
+                overflow: hidden;
+                max-width: 100%;
+
+                &.number,&.function {
+                    margin-left: auto;
+                }
+
+                &:first-of-type {
+                    // border-left: 1px solid black;
+                }
+            }
+        }
+    }
+}

@@ -35,7 +35,7 @@
 
     .input:focus {
         outline: none;
-        border: 1.5px solid #1a73e8;
+        border: 1.5px solid @details;
 
         &::placeholder {
             color: @text;
@@ -43,7 +43,11 @@
         }
 
         &:invalid:not(:placeholder-shown) {
-            border: 1.5px solid #f41919;
+            border: 1.5px solid @bad;
+
+            &~.user-label{
+                color: @bad;
+            }
         }
     }
 
@@ -61,6 +65,6 @@
     }
 
     .input:focus~.user-label {
-        color: #1a73e8;
+        color: @details;
     }
 }

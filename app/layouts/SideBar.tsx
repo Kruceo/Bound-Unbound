@@ -2,12 +2,14 @@ import { useState } from "react"
 import Ico from "../components/Ico"
 import "./SideBar.less"
 import { navigate } from "vike/client/router"
+import logoImg from '../assets/logo.svg'
 export default function SideBar() {
     return <nav id="sidebar">
+        <img src={logoImg} alt="logo" />
         <div className="items">
             <a href="/"><Ico>home</Ico>Dashboard</a>
             <a href="/connections"><Ico>host</Ico>Nodes</a>
-            <a href="/docs"><Ico>host</Ico>Docs</a>
+            {/* <a href="/docs"><Ico>host</Ico>Docs</a> */}
         </div>
         {/* <a href="">📹</a> */}
         {/* <a href="">📹</a> */}

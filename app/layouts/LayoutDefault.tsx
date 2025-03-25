@@ -10,7 +10,6 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     onAuthStatus().then(f => {
-      console.log(f)
       if (!f.Data.AlreadyRegistered) {
         navigate("/auth/register")
         return
@@ -18,7 +17,7 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
       onAuthToken().then(d => {
         if (!d) navigate("/auth/signin")
         else setLogged(true)
-      }).catch((r) => alert(r))
+      }).catch(() => navigate("/auth/signin"))
     })
 
   }, [])

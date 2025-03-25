@@ -3,6 +3,7 @@ import { onLoginAction } from "./Page.telefunc";
 import "./Page.less";
 import { navigate } from "vike/client/router";
 import { useState } from "react";
+import logoImg from '../../../assets/logo.svg'
 export default function Page() {
 
   const [problem, setProblem] = useState<string | undefined>(undefined)
@@ -46,7 +47,9 @@ const [submitEnabled,setSubmitEnabled] = useState(true)
       {/* {problem} */}
       <main className="login-frame">
         <form onSubmit={loginHandler}>
+       
           <h2>Account</h2>
+          <img src={logoImg} width={48} alt="logo" />
           <p>Sign in to control your DNS servers.</p>
           <div className="inputs">
             <Input onInput={inputHandler} name="user" placeholder="Type your username" type="text" title="User" required />

@@ -23,7 +23,7 @@ export async function onAuthStatus() {
         return res.data as { Data: { AlreadyRegistered: boolean } }
     }
     catch (err: any) {
-        console.log(err.response.statusText)
+        console.log(err)
     }
     return { Data: { AlreadyRegistered: true } }
 }

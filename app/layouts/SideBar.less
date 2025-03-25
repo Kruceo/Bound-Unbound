@@ -17,6 +17,14 @@
     // backdrop-filter: @backdrop;
     z-index: 999;
 
+    img{
+        width: 23px;
+        aspect-ratio: 1;
+        object-fit: contain;
+        // background-color: red;
+        margin-right: 12px;
+    }
+
     .items {
         display: flex;
         justify-content: center;
@@ -50,6 +58,7 @@
 .options {
   
     background: darken(@forms, 5%);
+    // background-color: darken(@forms, 85%);
     box-shadow: 0px -5px 5px #00000005 inset;
     outline: 1px solid fade(@text, 15);
     @options-padding: 8px;
@@ -65,6 +74,7 @@
 
     // background-color: black;
     button {
+        border: none;
         outline: none;
         width: 100%;
         padding: 0;
@@ -83,7 +93,7 @@
         margin-bottom: @options-padding;
 
         button {
-            height: 23px;
+            height: 22px;
 
             .avatar {
                 // margin-left: auto;
@@ -120,18 +130,16 @@
         max-height: 100px;
         &.hide {
             transition:  
-            max-height 140ms 140ms linear, 
+                max-height 140ms 140ms linear, 
                 opacity 140ms 0ms linear,
                 margin 140ms 140ms linear, 
                 padding 140ms 140ms linear;
             max-height: 0;
-            // display: none;
-            // visibility: collapse;
-            // height: 0;
             padding:0;
             margin: 0;
             border: none;
             opacity:0;
+            overflow: hidden
         };
 
         button {
@@ -141,6 +149,7 @@
             // padding: 0px;
             &:hover{
                 background-color: fade(@text,15);
+                *{color: @details!important;}
             }
             &:first-of-type {
                 margin-top: @options-padding;

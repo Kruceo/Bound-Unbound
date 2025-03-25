@@ -2,20 +2,17 @@ import { useData } from "vike-react/useData";
 import type { Data } from "./+data.js";
 import "./Page.less"
 import { useEffect, useState } from "react";
-import { navigate } from "vike/client/router";
+import { navigate, reload } from "vike/client/router";
 import { onDeleteRedirectAction, onGetConfigHash, onNewRedirectAction, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
 import Input, { Select } from "../../../../components/Input.jsx";
 import { inputPatternFor, RecordTypes } from "../../../utils.js";
 import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
+import Table from "../../../../components/Table.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
-
-
-
-
   return (
     <main id="redirects-page">
       {DynamicComponent}
@@ -23,53 +20,31 @@ export default function Page() {
         <h1 className="page-title">Redirects</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected[0]); setSelected([]); navigate("./redirects") }}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onDeleteRedirectAction(data.nodeId, selected); setSelected([]); reload() }}>
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
-            onSubmit={() => { setDynamicComponent(<></>); navigate(location.pathname) }}
+            onSubmit={() => { setDynamicComponent(<></>); reload() }}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
           <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data} />
         </div>
       </div>
-      <ul className="domains">
-        <li className="header">
-          {/* <header> */}
-          <input type="checkbox" onChange={(e) => e.currentTarget.checked ? setSelected(data.redirects.map(e => e.From)) : setSelected([])} />
-          <div className="table-row">
-            <p>From</p>
-            <p>Type</p>
-            <p>To</p>
-            <p>Local Zone</p>
-          </div>
-          <div className="end"></div>
-        </li>
-        {/* {data.blockedNames.length} */}
-        {data.redirects.map(each => <li className="domain" key={each.From}>
 
-          <input type="checkbox"
-            checked={selected.includes(each.From)}
-            onChange={(e) => !e.currentTarget.checked ? setSelected(selected.filter(f => f != each.From)) : setSelected([...selected, each.From])}
-          />
-          {/* <input className="apple-switch" type="checkbox" defaultChecked /> */}
-          <div className="table-row">
-            <p>{each.From}</p>
-            <p>{each.RecordType}</p>
-            <p>{each.To}</p>
-            <p>{each.LocalZone ? "Yes" : "No"}</p>
-            {/* <p>always_nxdomain</p> */}
-          </div>
-          <a target="_blank" className="end" href={"http://" + each.From}>
-            <span className="material-symbols-outlined">
-              language
-            </span>
-          </a>
-        </li>)}
-
-
-      </ul>
+      {/* {data.blockedNames.length} */}
+      <Table
+        select={{ selected, setSelected, uniqueKey: "From" }}
+        data={data.redirects.map(e => ({
+          ...e,
+          buttons: () => <a target="_blank" href={`http://${e.From}`} className="table-button"><Ico>language</Ico></a>
+        }))}
+        headers={[
+          { acessor: "From", name: "From", width: 3 },
+          { acessor: "RecordType", name: "Type", width: 3 },
+          { acessor: "To", name: "To", width: 3 },
+          { acessor: 'buttons', name: "" }]}>
+      </Table>
     </main>
   );
 }
@@ -89,8 +64,10 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     props.onSubmit()
 
   }}>
-    <Input title="From" required type="text" name="from" pattern={inputPatternFor("CNAME")} placeholder="www.domain.com" />
-    <div className="dock">
+    <h2>Redirect</h2>
+    <p>This will redirect all requests from address to other address.</p>
+    <div className="inputs">
+      <Input title="From" required type="text" name="from" pattern={inputPatternFor("CNAME")} placeholder="www.domain.com" />
       <Select onChange={(e) => setSubtype(e.currentTarget.value as RecordTypes)} title="Type" required name="record-type" id="record-type">
         <option value="A">A</option>
         <option value="AAAA">AAAA</option>
@@ -103,7 +80,7 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     </div>
     <div className="b-dock">
       <button onClick={props.onCancel} type="reset" >Cancel</button>
-      <button type="submit">Block</button>
+      <button type="submit">Finish</button>
     </div>
   </form>
 }
