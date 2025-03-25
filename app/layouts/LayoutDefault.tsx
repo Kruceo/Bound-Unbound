@@ -10,7 +10,6 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     onAuthStatus().then(f => {
-      console.log(f)
       if (!f.Data.AlreadyRegistered) {
         navigate("/auth/register")
         return

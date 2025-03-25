@@ -17,7 +17,6 @@
             gap: 12px;
 
             button {
-                background-color: @forms;
                 aspect-ratio: 1;
                 width: 48px;
                 height: 48px;
@@ -26,7 +25,11 @@
                 color: @text;
 
                 &.delete {
-                    background: @bad;
+                    border-color: @bad;
+
+                    * {
+                        color: @bad !important;
+                    }
                 }
 
                 &:hover {
@@ -43,26 +46,52 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        background-color: @forms;
-        padding: 24px;
-        border-radius: 24px;
+        justify-content: center;
+        align-items: center;
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        background-color: @forms;
+        z-index: 999;
+        width: 350px;
+        border-radius: 24px;
+        padding: 24px;
 
-        input {
-            width: 100%;
+
+        // gap: 24px;
+        h2 {
+            margin-inline: auto;
         }
 
-        .dock {
-            display: flex;
-            gap: 24px;
+        .inputs {
+            display: grid;
+            width: 100%;
+            gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            .input-group,
+            input {
+                width: 100%;
+                &:has(input[name=from]){
+                    // background-color: red;
+                    grid-column: 1 / span 3;
+                }
+                &:has(input[name=to]){
+                    // background-color: red;
+                    grid-column: 2 / span 2;
+                }
+            }
         }
 
         .b-dock {
             margin-left: auto;
+            margin-top: 24px;
             gap: 12px;
             display: flex;
+            button[type=reset]{
+                border-color: transparent;
+                box-shadow: none;
+                opacity: 0.8;
+                // color:@bad!important;
+            }
         }
     }
 }

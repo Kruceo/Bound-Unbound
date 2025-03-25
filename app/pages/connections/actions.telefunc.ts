@@ -62,13 +62,13 @@ export async function onDeleteRedirectAction(connectionId: string, domain: strin
   return responses
 }
 
-export async function onGetConfigHash(connectionId: string) {
+export async function onGetConfigHash(connectionId: string): Promise<ConfigHashResponse> {
   const url = apiUrl(`v1/connections/${connectionId}/confighash`)
   try {
     const res = await apiAxios.get(url)
     return await res.data
   } catch (error) {
-    return (error as AxiosError).response?.data
+    return (error as AxiosError).response?.data as any
   }
 }
 

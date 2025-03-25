@@ -52,24 +52,26 @@ body {
   
   a.button,
   button {
-    // border: 1px solid #0003;
-    border: none;
+    border: 1px solid fade(@details,40);
+    background-color: transparent;
     border-radius: 12px;
-    padding: 12px;
-    background: linear-gradient(lighten(@details, 2.5%), @details);
-    color: @onDetails!important;
+    padding: 8px;
     box-shadow: @boxShadow2;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     font-weight: 500;
+    color: @details!important; 
     *{
-      color: @onDetails!important;
+      color: @details!important;
     }
     &:hover {
-      filter: brightness(1.25);
-      
+      filter: brightness(1.50);
+      // background-color: fade(#000,50);
+      // box-shadow: 0px 0px 10px currentColor;
+      // color: @onDetails!important;
+      // *{color: @onDetails!important;}
     }
   }
   

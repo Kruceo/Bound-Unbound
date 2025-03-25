@@ -11,6 +11,5 @@ export default {
   // https://vike.dev/head-tags
   title: "Bound Unbound",
   description: "Multiple Unbound instances manager.",
-
   extends: vikeReact,
 } satisfies Config;

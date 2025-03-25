@@ -13,7 +13,6 @@ export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
   const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
-
   return (
     <main id="blocks-page">
       {DynamicComponent}
@@ -21,11 +20,11 @@ export default function Page() {
         <h1 className="page-title">Blocked Domains</h1>
         <div className="controls">
           {selected.length > 0 ?
-            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onUnblockAction(data.nodeId, selected);setSelected([]); navigate("./blocks")}}>
+            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onUnblockAction(data.nodeId, selected); setSelected([]); reload() }}>
               <Ico>delete</Ico>
             </button> : null}
           <button aria-label="Add" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(<AddAddressForm
-            onSubmit={() => { setDynamicComponent(<></>); navigate("./blocks") }}
+            onSubmit={() => { setDynamicComponent(<></>) ;reload()}}
             onCancel={() => setDynamicComponent(<></>)} />)}>
             <Ico>add_box</Ico>
           </button>
@@ -52,11 +51,14 @@ function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
     const domain = formData.get('domain')
     if (!domain) return alert("no domain");
     await onBlockAction(data.nodeId, domain.toString().split(","))
-    navigate("./blocks")
     props.onSubmit()
 
   }}>
-    <Input title="Domain" required type="text" placeholder="domain.com" pattern={inputPatternFor("CNAME")} name="domain" />
+    <h2>Blocking</h2>
+    <p>This will block all requests to the selected domain.</p>
+    <div className="inputs">
+      <Input title="Domain" required type="text" placeholder="domain.com" pattern={inputPatternFor("CNAME")} name="domain" />
+    </div>
     <div className="b-dock">
       <button onClick={props.onCancel} type="reset" >Cancel</button>
       <button type="submit">Block</button>

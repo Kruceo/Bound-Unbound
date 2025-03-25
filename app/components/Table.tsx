@@ -17,8 +17,8 @@ function defaultCellHandler(v: any) {
 export default function Table(props: TableProps) {
 
     const ref = useRef<HTMLUListElement>(null)
-    const [data, setData] = useState([...props.data])
-    const [sortState, setSortState] = useState<boolean>()
+    const data = props.data
+    // const [data, setData] = useState(props.data)
     const detailedHeaders = props.headers.map(e => ({
         ...e,
         customHandler: e.customHandler ?? defaultCellHandler,
@@ -26,9 +26,14 @@ export default function Table(props: TableProps) {
         width: e.width ?? 1
     }))
 
+    const [sortState, setSortState] = useState<{ order?: boolean, header: typeof detailedHeaders[0] }>({ header: detailedHeaders[0] })
+
+    const sortedData = sort()
+
     const fractions = detailedHeaders.reduce((acc, next) => acc + next.width + "fr ", "")
+
     function nextSortState() {
-        switch (sortState) {
+        switch (sortState.order) {
             case true:
                 return false
                 break;
@@ -41,47 +46,40 @@ export default function Table(props: TableProps) {
                 break;
         }
     }
-    function sortHandler(n: typeof detailedHeaders[0]) {
-        if (data.length == 0) return
-        const ss = nextSortState()
+
+    function sort() {
+        if (data.length == 0) return data
+        const n = sortState.header
         const sortStateString = (() => {
-            if (ss == undefined) return 'original'
-            else if (ss == true) return 'asc'
+            if (sortState.order == undefined) return 'original'
+            else if (sortState.order == true) return 'asc'
             return 'desc'
         })()
         switch (n.type + ":" + sortStateString) {
             case "string:asc":
-                var d = [...data.sort((a, b) => a[n.acessor].localeCompare(b[n.acessor]))]
-                setData(d)
-                break;
+                var d = data.toSorted((a, b) => a[n.acessor].localeCompare(b[n.acessor]))
+                return (d)
 
             case "string:desc":
-                var d = [...data.sort((a, b) => b[n.acessor].localeCompare(a[n.acessor]))]
-                setData(d)
-                break;
-            case "string:original":
-                var d = [...props.data]
-                setData(d)
-                break;
+                var d = data.toSorted((a, b) => b[n.acessor].localeCompare(a[n.acessor]))
+                return (d)
 
             case "number:asc":
-                var d = [...data.sort((a, b) => a[n.acessor] - (b[n.acessor]))]
-                setData(d)
-                break;
+                var d = data.toSorted((a, b) => a[n.acessor] - (b[n.acessor]))
+                return (d)
 
             case "number:desc":
-                var d = [...data.sort((a, b) => b[n.acessor] - (a[n.acessor]))]
-                setData(d)
-                break;
-            case "number:original":
-                var d = [...props.data]
-                setData(d)
-                break;
+                var d = data.toSorted((a, b) => b[n.acessor] - (a[n.acessor]))
+                return (d)
 
             default:
-                break;
+                return [...data]
         }
-        setSortState(ss)
+    }
+
+    function sortHandler(n: typeof detailedHeaders[0]) {
+        if (data.length == 0) return
+        setSortState({ header: n, order: nextSortState() })
     }
 
     function onSelectHandler(isAdd: boolean, item: any) {
@@ -115,9 +113,9 @@ export default function Table(props: TableProps) {
                     >
                         <span onClick={() => { sortHandler(n) }} className="title">{n.name}</span>
                         <span className="order">
-                            {sortState == true ? "▴" : ""}
-                            {sortState == false ? "▾" : ""}
-                            {sortState == undefined ? "-" : ""}
+                            {sortState.order == true ? "▴" : ""}
+                            {sortState.order == false ? "▾" : ""}
+                            {sortState.order == undefined ? "-" : ""}
                         </span>
                     </TableCell>)
                 }
@@ -125,7 +123,7 @@ export default function Table(props: TableProps) {
         </li>
 
         {
-            data.map((v, index) => {
+            sortedData.map((v, index) => {
                 return <TableRow fractions={fractions} selected={props.select?.selected.includes(v[props.select.uniqueKey])} onSelect={(isAdd) => onSelectHandler(isAdd, v)} key={v[props.select?.uniqueKey ?? index]}>
                     {
                         detailedHeaders.map(h => {
