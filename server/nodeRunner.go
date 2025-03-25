@@ -63,6 +63,8 @@ func Run() {
 				fmt.Println("Read error:", err)
 				conn.Close()
 				conn = nil
+				cipher = nil
+				memory.RemoveHost()
 			} else {
 				HandleCommands(conn, string(msg), &cipher)
 			}
