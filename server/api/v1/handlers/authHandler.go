@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	v1 "unbound-mngr-host/api/v1"
 )
 
@@ -22,10 +23,49 @@ type TokenW struct {
 	Token string
 }
 
+type BlockedRequester struct {
+	LastTry   time.Time
+	LimitTime time.Time
+}
+
+var storedRequests = make(map[string]*BlockedRequester)
+
+func init() {
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		for range ticker.C {
+			for i, v := range storedRequests {
+				if time.Now().UnixMilli()-v.LastTry.UnixMilli() > 1000*60 {
+					// fmt.Println("deleting", i)
+					delete(storedRequests, i)
+				}
+			}
+			// fmt.Println("Blocked Requesters cleaning")
+		}
+	}()
+}
+
 func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "POST, OPTIONS") {
 		return
 	}
+
+	now := time.Now()
+
+	if timestamp, exists := storedRequests[r.RemoteAddr]; exists {
+		now := time.Now()
+		if timestamp.LimitTime.UnixMilli() > now.UnixMilli() {
+			timestamp.LimitTime = timestamp.LimitTime.Add(15 * time.Second)
+			timestamp.LastTry = now
+			v1.FastErrorResponse(w, r, "AUTH_BLOCKED", http.StatusUnauthorized)
+			fmt.Println("blocked", r.RemoteAddr, timestamp.LimitTime.String())
+			return
+		}
+	}
+
+	newLimitTime := BlockedRequester{LastTry: now, LimitTime: now.Add(2 * time.Second)}
+	storedRequests[r.RemoteAddr] = &newLimitTime
+
 	w.Header().Add("Content-Type", "application/json")
 	var body []byte
 	body, err := io.ReadAll(r.Body)
