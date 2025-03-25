@@ -10,18 +10,39 @@ The project make the management of multiple Unbound servers easy, concentrating 
 - ✅ Easily redirect domains (A,AAAA,CNAME,MX,TXT)
 - ✅ Encryption over Host - Unbound Client communication
 - ✅ Reload Unbound
-- ❌ Frontend - Host Auth
+- ✅ Frontend - Host Auth
 
 
 ### Side Targets
-
+- ❌ Verify if unbound is running after a server reload, if not, restore last config file
+- ❌ Block multiple login requests
+- ❌ Store client ip in JWT and compare with client request 
 - ❌ Modify Unbound configuration remotely
+- ❌ Change some host configuration remotely
 - ❌ Timed Rules
 - ❌ TOTP for two factor authentication
 
+## Build
+
+All tests and builds were run with `go 1.24.1`.
+
+The host and node server share some code together, so the builds are configured using tags. 
+
+### Building Unbound Node binary
+
+```bash
+go build -o "bunbound-node"
+```
+
+### Building Host Server binary
+
+```bash
+go build -tags=host -o "bunbound-node"
+```
+
 ## Running host
 
-You will need to run the binary with at less one port open (8080); The project uses the same binary to host and client.
+You will need to run the binary with at less one port open (8080).
 
 ```bash
 go run main.go --host
