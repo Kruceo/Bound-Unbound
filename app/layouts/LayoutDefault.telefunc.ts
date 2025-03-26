@@ -8,12 +8,12 @@ export async function onAuthToken() {
         const url = apiUrl("auth/token")
 
         const res = await apiAxios.get(url)
-        return res.status == 200
+        return { ok: res.status == 200, cookies: res.headers["set-cookie"] }
     }
     catch (err: any) {
         console.log(err.response.statusText)
     }
-    return false
+    return { ok: false }
 }
 
 export async function onAuthStatus() {

@@ -109,7 +109,7 @@ func AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := v1.GenerateJWT(b.User)
+	jwtToken, err := v1.GenerateJWT(b.User, r.RemoteAddr)
 	if err != nil {
 		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
@@ -135,20 +135,14 @@ func AuthClientToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := v1.JWTMiddleware(w, r)
+	_, err := v1.JWTMiddleware(w, r)
 	if err != nil {
 		fmt.Println(err)
+		v1.FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-
-	subject, err := token.Claims.GetSubject()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	w.Header().Set("Set-Cookie", "user="+subject+"; SameSite=None; Secure")
 
 	w.Write([]byte("Ok"))
 }

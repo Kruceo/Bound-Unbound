@@ -14,9 +14,9 @@ The project make the management of multiple Unbound servers easy, concentrating 
 
 
 ### Side Targets
+- ✅ Block multiple login requests
+- ✅ Store client ip in JWT and compare with client request 
 - ❌ Verify if unbound is running after a server reload, if not, restore last config file
-- ❌ Block multiple login requests
-- ❌ Store client ip in JWT and compare with client request 
 - ❌ Modify Unbound configuration remotely
 - ❌ Change some host configuration remotely
 - ❌ Timed Rules
@@ -37,7 +37,7 @@ go build -o "bunbound-node"
 ### Building Host Server binary
 
 ```bash
-go build -tags=host -o "bunbound-node"
+go build -tags=host -o "bunbound-host"
 ```
 
 ## Running host
