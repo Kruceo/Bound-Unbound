@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unbound-mngr-host/enviroment"
 	"unbound-mngr-host/host"
 	"unbound-mngr-host/utils"
 
@@ -18,7 +19,7 @@ func List(conn *websocket.Conn, id string, args []string) error {
 
 	if args[0] == "blocked" {
 
-		archive, err := os.OpenFile(host.BLOCK_FILEPATH, os.O_RDONLY, 0644)
+		archive, err := os.OpenFile(enviroment.BLOCK_FILEPATH, os.O_RDONLY, 0644)
 		scanner := bufio.NewScanner(archive)
 
 		if err != nil {
@@ -41,7 +42,7 @@ func List(conn *websocket.Conn, id string, args []string) error {
 
 	if args[0] == "redirects" {
 
-		archive, err := os.OpenFile(host.FORWARD_FILEPATH, os.O_RDONLY, 0644)
+		archive, err := os.OpenFile(enviroment.FORWARD_FILEPATH, os.O_RDONLY, 0644)
 		scanner := bufio.NewScanner(archive)
 
 		if err != nil {
@@ -66,7 +67,7 @@ func List(conn *websocket.Conn, id string, args []string) error {
 	}
 	if args[0] == "confighash" {
 
-		hash, err := utils.CombinedFileHash([]string{host.BLOCK_FILEPATH, host.FORWARD_FILEPATH})
+		hash, err := utils.CombinedFileHash([]string{enviroment.BLOCK_FILEPATH, enviroment.FORWARD_FILEPATH})
 		if err != nil {
 			return err
 		}

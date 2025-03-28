@@ -4,6 +4,7 @@ var ErrorMessages = map[string]string{
 	"JSON_ENCODING":        "Failed to encode JSON",
 	"JSON_DECODE":          "Failed to decode JSON",
 	"AUTH":                 "Unauthorized access",
+	"AUTH_BLOCKED":         "Unauthorized access",
 	"WRONG_LOGIN":          "Invalid login credentials",
 	"LOGIN":                "Intern auth error",
 	"OVERWRITING_REGISTER": "Intern auth error",

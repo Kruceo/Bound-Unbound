@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unbound-mngr-host/enviroment"
 	"unbound-mngr-host/host"
 
 	"github.com/gorilla/websocket"
@@ -16,7 +17,7 @@ func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
 		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' block 'address.net'", args)
 	}
 
-	archive, err := os.OpenFile(host.BLOCK_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	archive, err := os.OpenFile(enviroment.BLOCK_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	scanner := bufio.NewScanner(archive)
 	archiveMap := make(map[string]struct{})
 

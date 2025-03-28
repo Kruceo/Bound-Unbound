@@ -23,6 +23,10 @@ func SetHost(conn *websocket.Conn, cipher cipher.AEAD) error {
 	return fmt.Errorf("host already registered")
 }
 
+func RemoveHost() {
+	delete(Connections, "_HOST_")
+}
+
 type Client struct {
 	Conn   *websocket.Conn
 	Name   string

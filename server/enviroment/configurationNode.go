@@ -1,4 +1,7 @@
-package host
+//go:build !host
+// +build !host
+
+package enviroment
 
 import (
 	"bufio"
@@ -16,10 +19,8 @@ var RELOAD_COMMAND []string
 var MAIN_SERVER_ADDRESS string
 
 func InitLocals() {
-
 	MAIN_SERVER_ADDRESS = utils.GetEnvOrDefault("MAIN_SERVER_ADDRESS", "127.0.0.1:8080")
 	RELOAD_COMMAND = strings.Split(utils.GetEnvOrDefault("UNBOUND_RELOAD_COMMAND", "unbound-control reload"), " ")
-	// if os.Args[1] != "--host" {
 	FORWARD_FILEPATH = utils.GetEnvOrDefault("FORWARD_FILEPATH", "/opt/unbound/etc/unbound/forward_records.conf")
 	BLOCK_FILEPATH = utils.GetEnvOrDefault("BLOCK_FILEPATH", "/opt/unbound/etc/unbound/block_records.conf")
 	UNBOUND_CONF_FILEPATH = utils.GetEnvOrDefault("UNBOUND_CONF_FILEPATH", "/opt/unbound/etc/unbound/unbound.conf")
@@ -65,5 +66,4 @@ func InitLocals() {
 	}
 
 	fmt.Println("="+r.FindString(configFile), r.MatchString(configFile))
-	// }
 }

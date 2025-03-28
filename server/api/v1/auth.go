@@ -96,9 +96,9 @@ func InitAuth() {
 	}
 }
 
-func GenerateJWT(username string) (string, error) {
+func GenerateJWT(username string, address string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": username,
+		"sub": fmt.Sprintf("%s$%s", username, address),
 		"exp": time.Now().Add(time.Second * 3600).Unix(),
 		"iat": time.Now().Unix(),
 	}
@@ -111,6 +111,11 @@ func GenerateJWT(username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func ParseJWTSubject(subject string) (string, string) {
+	splited := strings.Split(subject, "$")
+	return splited[0], strings.Split(splited[1], ":")[0]
 }
 
 func ValidateJWT(tokenString string) (*jwt.Token, error) {
@@ -140,6 +145,22 @@ func JWTMiddleware(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 
 		return nil, err
 	}
+
+	subject, err := token.Claims.GetSubject()
+
+	if err != nil {
+		fmt.Println(err)
+		FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
+		return nil, err
+	}
+
+	user, userAddress := ParseJWTSubject(subject)
+
+	if userAddress != strings.Split(r.RemoteAddr, ":")[0] {
+		FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
+		return nil, fmt.Errorf("jwt address does not match with request address")
+	}
+	w.Header().Add("Set-Cookie", "user="+user+"; SameSite=Lax;")
 
 	return token, nil
 }

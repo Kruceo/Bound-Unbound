@@ -3,13 +3,14 @@ package commands
 import (
 	"fmt"
 	"os/exec"
+	"unbound-mngr-host/enviroment"
 	"unbound-mngr-host/host"
 
 	"github.com/gorilla/websocket"
 )
 
 func ReloadConfig(conn *websocket.Conn, id string) error {
-	cmd := exec.Command(host.RELOAD_COMMAND[0], host.RELOAD_COMMAND[1:]...)
+	cmd := exec.Command(enviroment.RELOAD_COMMAND[0], enviroment.RELOAD_COMMAND[1:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println("host reload command: " + err.Error())

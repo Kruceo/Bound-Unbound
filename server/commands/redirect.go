@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"unbound-mngr-host/enviroment"
 	"unbound-mngr-host/host"
 	"unbound-mngr-host/utils"
 
@@ -49,7 +50,7 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 		args[2] = strings.Join(args[2:], " ")
 	}
 
-	archive, err := os.OpenFile(host.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	archive, err := os.OpenFile(enviroment.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	scanner := bufio.NewScanner(archive)
 
 	archiveMap := make(map[string]FRedirect)
@@ -118,7 +119,7 @@ func RemoveRedirect(conn *websocket.Conn, id string, args []string) error {
 		return fmt.Errorf("the entry is not a domain")
 	}
 
-	archive, err := os.OpenFile(host.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	archive, err := os.OpenFile(enviroment.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	scanner := bufio.NewScanner(archive)
 
 	archiveMap := make(map[string]FRedirect)

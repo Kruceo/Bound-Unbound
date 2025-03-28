@@ -15,8 +15,13 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
         return
       }
       onAuthToken().then(d => {
-        if (!d) navigate("/auth/signin")
+        if (!d.ok) navigate("/auth/signin")
         else setLogged(true)
+        if (d.cookies) {
+          for (const cookie of d.cookies) {
+            document.cookie = cookie
+          }
+        }
       }).catch(() => navigate("/auth/signin"))
     })
 
@@ -38,7 +43,7 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
           : ""
       }
       <div className="transition-loader">
-      <span className="loader"></span>
+        <span className="loader"></span>
       </div>
     </div>
   );
