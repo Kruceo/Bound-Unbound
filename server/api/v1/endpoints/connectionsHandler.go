@@ -1,13 +1,13 @@
-package handlers
+package endpoints
 
 import (
 	"encoding/json"
 	"net/http"
-	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/memory"
+	v1 "server2/api/v1"
+	usecases "server2/application/useCases"
 )
 
-func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
+func (bh V1Handlers) ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, OPTIONS") {
 		return
 	}
@@ -19,13 +19,17 @@ func ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		return
 	}
+
+	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+
 	type ConnectionR struct {
 		Name          string
 		RemoteAddress string
 	}
 	var b v1.Response[[]ConnectionR] = v1.Response[[]ConnectionR]{Data: make([]ConnectionR, 0), Message: ""}
-	for k, v := range memory.Connections {
-		b.Data = append(b.Data, ConnectionR{Name: v.Name, RemoteAddress: k})
+	for _, v := range bh.NodeRepo.IDs() {
+		node := getNode.Execute(v)
+		b.Data = append(b.Data, ConnectionR{Name: node.Name, RemoteAddress: v})
 	}
 
 	decoded, err := json.Marshal(b)

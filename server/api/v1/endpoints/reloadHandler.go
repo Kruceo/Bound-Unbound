@@ -1,14 +1,14 @@
-package handlers
+package endpoints
 
 import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/memory"
+	v1 "server2/api/v1"
+	usecases "server2/application/useCases"
 )
 
-func ReloadHandler(w http.ResponseWriter, r *http.Request) {
+func (bh *V1Handlers) ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "POST, OPTIONS") {
 		return
 	}
@@ -21,16 +21,18 @@ func ReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+
 	connectionName := r.PathValue("connection")
-	client, exists := memory.Connections[connectionName]
-	if !exists {
+	client := getNode.Execute(connectionName)
+	if client == nil {
 		v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(id+" reload", true)
 
-	err := memory.WaitForResponse(id)
+	err := bh.ResponseRepo.WaitForResponse(id)
 	if err != nil {
 		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 		return

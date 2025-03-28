@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"net/http"
-	"unbound-mngr-host/utils"
+	"server2/utils"
 )
 
 type Response[T any] struct {

@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"server2/enviroment"
+	"server2/utils"
 	"strings"
-	"unbound-mngr-host/enviroment"
-	"unbound-mngr-host/host"
-	"unbound-mngr-host/utils"
-
-	"github.com/gorilla/websocket"
 )
 
 type FRedirect struct {
@@ -19,30 +16,30 @@ type FRedirect struct {
 	LocalOnly bool
 }
 
-func AddRedirect(conn *websocket.Conn, id string, args []string) error {
+func AddRedirect(id string, args []string) (string, error) {
 
 	// validation
 	if len(args) < 3 {
-		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' redirect 'address.net' 'A|AAAA|CNAME' 'other.address.net' 'local-zone|none'", args)
+		return "", fmt.Errorf("wrong Syntax: (%v)\nuse 'id' redirect 'address.net' 'A|AAAA|CNAME' 'other.address.net' 'local-zone|none'", args)
 	}
 
 	typeExists, subType := utils.ValidateRecordType(args[1])
 
 	if !strings.Contains(args[0], ".") {
-		return fmt.Errorf("the entry is not a domain")
+		return "", fmt.Errorf("the entry is not a domain")
 	}
 
 	if !typeExists {
-		return fmt.Errorf("the entry is not a record type")
+		return "", fmt.Errorf("the entry is not a record type")
 	}
 	if subType == "domain" {
 		if !strings.Contains(args[2], ".") {
-			return fmt.Errorf("the target is not a domain")
+			return "", fmt.Errorf("the target is not a domain")
 		}
 	}
 	if subType == "ip4" || subType == "ip6" {
 		if net.ParseIP(args[2]) == nil {
-			return fmt.Errorf("the target is not a valid address")
+			return "", fmt.Errorf("the target is not a valid address")
 		}
 	}
 
@@ -102,21 +99,19 @@ func AddRedirect(conn *websocket.Conn, id string, args []string) error {
 
 	// local-zone: "google.com." redirect
 	// local-data: "google.com. 3600 IN CNAME facebook.com."
-
-	host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
-	return nil
+	return "ok", nil
 }
 
-func RemoveRedirect(conn *websocket.Conn, id string, args []string) error {
+func RemoveRedirect(id string, args []string) (string, error) {
 
 	// validation
 	if len(args) < 1 {
-		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' unredirect 'address.net'", args)
+		return "", fmt.Errorf("wrong Syntax: (%v)\nuse 'id' unredirect 'address.net'", args)
 	}
 
 	if !strings.Contains(args[0], ".") {
-		return fmt.Errorf("the entry is not a domain")
+		return "", fmt.Errorf("the entry is not a domain")
 	}
 
 	archive, err := os.OpenFile(enviroment.FORWARD_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
@@ -165,7 +160,7 @@ func RemoveRedirect(conn *websocket.Conn, id string, args []string) error {
 		}
 	}
 
-	host.AddResponse(id, "ok")
+	// host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
-	return nil
+	return "ok", nil
 }

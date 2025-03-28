@@ -1,15 +1,15 @@
-package handlers
+package endpoints
 
 import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
-	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/memory"
+	v1 "server2/api/v1"
+	usecases "server2/application/useCases"
 )
 
-func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
+func (bh *V1Handlers) ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, OPTIONS") {
 		return
 	}
@@ -21,25 +21,32 @@ func ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		return
 	}
+
+	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+
 	type HashR struct {
 		Hash string
 	}
 
 	connectionName := r.PathValue("connection")
-	client, exists := memory.Connections[connectionName]
-	if !exists {
+	client := getNode.Execute(connectionName)
+	if client == nil {
 		v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
 	client.Send(fmt.Sprintf("%s list confighash", id), true)
 
-	err := memory.WaitForResponse(id)
+	err := bh.ResponseRepo.WaitForResponse(id)
 	if err != nil {
 		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 		return
 	}
-	res := memory.ReadResponse(id)
+	res, err := bh.ResponseRepo.ReadResponse(id)
+	if err != nil {
+		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+		return
+	}
 
 	var b v1.Response[HashR] = v1.Response[HashR]{Data: HashR{Hash: res}, Message: ""}
 

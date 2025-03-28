@@ -4,17 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"server2/enviroment"
 	"strings"
-	"unbound-mngr-host/enviroment"
-	"unbound-mngr-host/host"
-
-	"github.com/gorilla/websocket"
 )
 
-func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
+func Block(id string, unblock bool, args []string) (string, error) {
 
 	if len(args) < 1 {
-		return fmt.Errorf("wrong Syntax: (%v)\nuse 'id' block 'address.net'", args)
+		return "", fmt.Errorf("wrong Syntax: (%v)\nuse 'id' block 'address.net'", args)
 	}
 
 	archive, err := os.OpenFile(enviroment.BLOCK_FILEPATH, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
@@ -31,9 +28,8 @@ func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
 			continue
 		}
 		address := strings.Split(formatedLine, " ")[1]
-		// address := line[1]
 		fmt.Println("(" + address + ")")
-		archiveMap[address] = struct{}{} // Adiciona ao mapa sem desperdiçar memória
+		archiveMap[address] = struct{}{}
 	}
 
 	defer archive.Close()
@@ -57,7 +53,7 @@ func Block(conn *websocket.Conn, id string, unblock bool, args []string) error {
 		}
 	}
 
-	host.AddResponse(id, "ok")
+	// host.AddResponse(id, "ok")
 	// fmt.Println(args[0] + " blocked")
-	return nil
+	return "ok", nil
 }

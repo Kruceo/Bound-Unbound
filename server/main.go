@@ -1,8 +1,8 @@
 package main
 
 import (
-	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/enviroment"
+	"server2/application/controllers"
+	"server2/enviroment"
 
 	"github.com/joho/godotenv"
 )
@@ -10,9 +10,12 @@ import (
 func init() {
 	godotenv.Load(".env")
 	enviroment.InitLocals()
-	v1.InitAuth()
 }
 
 func main() {
-	Run()
+	if controllers.IsHost {
+		controllers.RunWebsocketAsHost()
+		return
+	}
+	controllers.RunWebsocketAsNode()
 }

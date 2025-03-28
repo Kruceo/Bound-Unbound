@@ -1,4 +1,4 @@
-package handlers
+package endpoints
 
 import (
 	"bufio"
@@ -9,9 +9,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	v1 "server2/api/v1"
 	"strings"
 	"time"
-	v1 "unbound-mngr-host/api/v1"
 )
 
 type LoginR struct {

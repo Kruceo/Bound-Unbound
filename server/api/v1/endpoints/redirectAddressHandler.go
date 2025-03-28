@@ -1,4 +1,4 @@
-package handlers
+package endpoints
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	v1 "server2/api/v1"
+	usecases "server2/application/useCases"
 	"strings"
-	v1 "unbound-mngr-host/api/v1"
-	"unbound-mngr-host/memory"
 )
 
 type RedirectBody struct {
@@ -18,7 +18,7 @@ type RedirectBody struct {
 	LocalZone  bool
 }
 
-func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
+func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, POST, DELETE, OPTIONS") {
 		return
 	}
@@ -27,25 +27,34 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+
 	if r.Method == "GET" {
 
 		connectionName := r.PathValue("connection")
-		client, exists := memory.Connections[connectionName]
-		if !exists {
+		client := getNode.Execute(connectionName)
+		if client == nil {
 			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 		id := fmt.Sprintf("%x", rand.Int())
 		client.Send(id+" list redirects", true)
 
-		err := memory.WaitForResponse(id)
+		err := bh.ResponseRepo.WaitForResponse(id)
 		if err != nil {
 			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
 		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
-		for _, v := range strings.Split(memory.Responses[id], ",") {
+
+		rawRedirects, err := bh.ResponseRepo.ReadResponse(id)
+		if err != nil {
+			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			return
+		}
+
+		for _, v := range strings.Split(rawRedirects, ",") {
 			if v == "" {
 				continue
 			}
@@ -67,8 +76,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if r.Method == "POST" {
 		connectionName := r.PathValue("connection")
-		client, exists := memory.Connections[connectionName]
-		if !exists {
+		client := getNode.Execute(connectionName)
+		if client == nil {
 			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
@@ -95,7 +104,7 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		client.Send(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), true)
 
-		err = memory.WaitForResponse(id)
+		err = bh.ResponseRepo.WaitForResponse(id)
 		if err != nil {
 			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
@@ -104,8 +113,8 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if r.Method == "DELETE" {
 		connectionName := r.PathValue("connection")
-		client, exists := memory.Connections[connectionName]
-		if !exists {
+		client := getNode.Execute(connectionName)
+		if client == nil {
 			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
@@ -128,7 +137,7 @@ func RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 		id := fmt.Sprintf("%X", rand.Int()*1000)
 		client.Send(id+" unredirect "+b.Domain, true)
 
-		err = memory.WaitForResponse(id)
+		err = bh.ResponseRepo.WaitForResponse(id)
 		if err != nil {
 			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
