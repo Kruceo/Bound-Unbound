@@ -15,6 +15,8 @@ import (
 	"server2/enviroment"
 	"server2/security"
 	"server2/utils"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -37,31 +39,46 @@ const IsHost = false
 
 func RunWebsocketAsNode() {
 	name := utils.GetEnvOrDefault("NAME", fmt.Sprintf("%x", rand.Int()))
+
 	var conn *websocket.Conn
-	fmt.Println("trying connection")
-	conn = connectWebsocket()
+	var connLocker sync.Mutex = sync.Mutex{}
+
 	host := entities.Node{Conn: conn, Name: "Host", Cipher: nil}
 
 	parse := usecases.ParseCommandUseCase{Cipher: &host.Cipher}
 
 	HandleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
 
-	go func() {
-		fmt.Println("sending and receiving keys")
-
-		var encodedPublicKey = base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
-
-		responseId := fmt.Sprintf("%x", rand.Int())
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s connect %s %s", responseId, encodedPublicKey, name)))
-	}()
-
 	for {
+		if conn == nil {
+			fmt.Println("trying connection")
+			conn = connectWebsocket()
+			go func() {
+				if conn == nil {
+					return
+				}
+				fmt.Println("sending and receiving keys")
+
+				var encodedPublicKey = base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
+
+				responseId := fmt.Sprintf("%x", rand.Int())
+				connLocker.Lock()
+				defer connLocker.Unlock()
+				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s connect %s %s", responseId, encodedPublicKey, name)))
+				// host.Send(, false)
+			}()
+			if conn == nil {
+				time.Sleep(3 * time.Second)
+			}
+			continue
+		}
+		fmt.Println("listening commands")
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println("Read error:", err)
 			conn.Close()
 			conn = nil
-			break
+			continue
 		}
 
 		command, err := parse.Execute(string(msg))
@@ -70,7 +87,7 @@ func RunWebsocketAsNode() {
 			continue
 		}
 
-		fmt.Println("[received]", command.IsEncrypted, command.String())
+		fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
 
 		if command.Entry == "connect" {
 			fmt.Println("connecting")
@@ -87,8 +104,9 @@ func RunWebsocketAsNode() {
 			fmt.Println("error")
 			continue
 		}
+		connLocker.Lock()
 		host.Send("_ add response "+command.Id+" "+response, true)
-
+		connLocker.Unlock()
 	}
 }
 
