@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"server2/api/v1/endpoints"
 	"server2/application/adapters"
-	"server2/application/entities"
+
 	usecases "server2/application/useCases"
 	"server2/application/useCases/commands"
 	"server2/application/useCases/handlers"
@@ -32,6 +32,7 @@ var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryRespo
 
 var saveNodeUseCase = usecases.SaveNodeUseCase{Repo: &nodeRepo}
 var deleteNodeUseCAse = usecases.DeleteNodeUseCase{Repo: &nodeRepo}
+var getOrCreate = usecases.GetOrCreateUseCase{Repo: &nodeRepo}
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
@@ -52,8 +53,11 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		nodeID := conn.RemoteAddr().String()
-		node := nodeRepo.Get(nodeID)
-
+		node, err := getOrCreate.Execute(nodeID, conn)
+		if err != nil {
+			fmt.Println("Node error:", err)
+			break
+		}
 		parseCommand := usecases.ParseCommandUseCase{Cipher: &node.Cipher}
 		command, err := parseCommand.Execute(string(msg))
 
@@ -67,7 +71,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("connecting")
 			sharedKey, name, _ := commands.Connect(command.Id, command.Args)
 			cipher := security.CreateCipher(sharedKey)
-			saveNodeUseCase.Execute(entities.Node{Conn: conn, Name: name, Cipher: cipher})
+			saveNodeUseCase.Execute(conn, name, cipher)
 			encodedPublicKey := base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
 			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
 

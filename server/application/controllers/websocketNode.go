@@ -4,11 +4,11 @@
 package controllers
 
 import (
+	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"server2/application/adapters"
-	"server2/application/entities"
 	usecases "server2/application/useCases"
 	"server2/application/useCases/commands"
 	"server2/application/useCases/handlers"
@@ -34,6 +34,7 @@ func connectWebsocket() *websocket.Conn {
 var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryResponseRepository()
 
 // var saveNode = usecases.SaveNodeUseCase{Repo: &nodeRepo}
+var getOrCreate = usecases.CreateNodeUseCase{}
 
 const IsHost = false
 
@@ -42,11 +43,9 @@ func RunWebsocketAsNode() {
 
 	var conn *websocket.Conn
 	var connLocker sync.Mutex = sync.Mutex{}
-
-	host := entities.Node{Conn: conn, Name: "Host", Cipher: nil}
-
-	parse := usecases.ParseCommandUseCase{Cipher: &host.Cipher}
-
+	var cipher cipher.AEAD
+	parse := usecases.ParseCommandUseCase{Cipher: &cipher}
+	cipherMessage := usecases.CipherMessageUseCase{}
 	HandleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
 
 	for {
@@ -92,9 +91,8 @@ func RunWebsocketAsNode() {
 		if command.Entry == "connect" {
 			fmt.Println("connecting")
 			sharedKey, _, _ := commands.Connect(command.Id, command.Args)
-			cipher := security.CreateCipher(sharedKey)
-			host.Cipher = cipher
-			host.Conn = conn
+			cipher = security.CreateCipher(sharedKey)
+			conn = conn
 			continue
 		}
 
@@ -106,7 +104,13 @@ func RunWebsocketAsNode() {
 			continue
 		}
 		connLocker.Lock()
-		err = host.Send("_ add response "+command.Id+" "+response, true)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("_ add response %s %s", command.Id, response), &cipher)
+		if err != nil {
+			connLocker.Unlock()
+			fmt.Println(err)
+			continue
+		}
+		conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		connLocker.Unlock()
 		fmt.Println(err)
 	}

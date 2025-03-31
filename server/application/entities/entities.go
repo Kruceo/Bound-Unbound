@@ -3,7 +3,6 @@ package entities
 import (
 	"crypto/cipher"
 	"fmt"
-	"server2/security"
 	"strconv"
 	"strings"
 
@@ -54,18 +53,19 @@ type Node struct {
 	Cipher cipher.AEAD
 }
 
-func (client Node) Send(msg string, encrypt bool) {
+func (client Node) Send(msg string, encrypt bool) error {
 	if encrypt {
-		base64Msg := security.CipherMessageBase64(msg, client.Cipher)
-		client.Conn.WriteMessage(websocket.TextMessage, append([]byte("#$"), base64Msg...))
+
 	} else {
 		client.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
 	}
+	return nil
 }
 
 type NodeRepository interface {
 	Save(node Node) (string, error)
 	Get(id string) *Node
+	Delete(id string) error
 	IDs() []string
 }
 

@@ -22,7 +22,10 @@ func (r *InMemoryNodeRepository) Save(node entities.Node) (string, error) {
 func (r *InMemoryNodeRepository) Get(id string) *entities.Node {
 	r.mu.Lock() // Pode ser necessário usar um mutex no Get também, dependendo do uso concorrente
 	defer r.mu.Unlock()
-	n := r.data[id]
+	n, exists := r.data[id]
+	if !exists {
+		return nil
+	}
 	return &n
 }
 
