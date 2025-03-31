@@ -5,10 +5,24 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"log"
 )
 
-func CreateCipher(secret []byte) cipher.AEAD {
+type CiphersUseCase struct {
+}
+
+func (c CiphersUseCase) CreateCipher(secret []byte) cipher.AEAD {
+	if lenght := len(secret); lenght < 24 {
+		toAdd := make([]byte, 24-lenght)
+		secret = append(secret, toAdd...)
+	} else if lenght := len(secret); lenght > 24 && lenght <= 32 {
+		toAdd := make([]byte, 32-lenght)
+		secret = append(secret, toAdd...)
+	} else {
+		panic(fmt.Errorf("secret is greater than 32 bytes: %v", secret))
+	}
+
 	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
 		panic(err)
@@ -22,7 +36,7 @@ func CreateCipher(secret []byte) cipher.AEAD {
 	return cipher
 }
 
-func RandomNonce() []byte {
+func (c CiphersUseCase) RandomNonce() []byte {
 
 	nonce := make([]byte, 12)
 	if _, err := rand.Read(nonce); err != nil {
@@ -31,7 +45,7 @@ func RandomNonce() []byte {
 	return nonce
 }
 
-func DecipherMessageBase64(str string, cipher cipher.AEAD) ([]byte, error) {
+func (c CiphersUseCase) DecipherMessageBase64(str string, cipher cipher.AEAD) ([]byte, error) {
 	var decodedStr []byte = make([]byte, len(str)+12)
 	n, err := base64.RawStdEncoding.Decode(decodedStr, []byte(str))
 	if err != nil {
@@ -47,8 +61,8 @@ func DecipherMessageBase64(str string, cipher cipher.AEAD) ([]byte, error) {
 	return result, nil
 }
 
-func CipherMessageBase64(str string, cipher cipher.AEAD) []byte {
-	nonce := RandomNonce()
+func (c CiphersUseCase) CipherMessageBase64(str string, cipher cipher.AEAD) []byte {
+	nonce := c.RandomNonce()
 	encryptedContent := cipher.Seal(nil, nonce, []byte(str), nil)
 	formatedMsg := encryptedContent
 	formatedMsg = append(formatedMsg, nonce...)

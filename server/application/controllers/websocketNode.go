@@ -5,6 +5,7 @@ package controllers
 
 import (
 	"crypto/cipher"
+	"crypto/ecdh"
 	"encoding/base64"
 	"fmt"
 	"math/rand"
@@ -12,8 +13,10 @@ import (
 	usecases "server2/application/useCases"
 	"server2/application/useCases/commands"
 	"server2/application/useCases/handlers"
+	"server2/application/useCases/security"
 	"server2/enviroment"
-	"server2/security"
+	"strings"
+
 	"server2/utils"
 	"sync"
 	"time"
@@ -35,8 +38,19 @@ var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryRespo
 
 // var saveNode = usecases.SaveNodeUseCase{Repo: &nodeRepo}
 var getOrCreate = usecases.CreateNodeUseCase{}
+var cipherCreation = security.CiphersUseCase{}
 
 const IsHost = false
+
+var privateKey *ecdh.PrivateKey
+var publicKey *ecdh.PublicKey
+
+func init() {
+	genKeysUseCase := security.GenKeysUseCase{}
+	priv, pub := genKeysUseCase.GenKeys()
+	privateKey = priv
+	publicKey = pub
+}
 
 func RunWebsocketAsNode() {
 	name := utils.GetEnvOrDefault("NAME", fmt.Sprintf("%x", rand.Int()))
@@ -58,7 +72,7 @@ func RunWebsocketAsNode() {
 				}
 				fmt.Println("sending and receiving keys")
 
-				var encodedPublicKey = base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
+				var encodedPublicKey = base64.RawStdEncoding.EncodeToString(publicKey.Bytes())
 
 				responseId := fmt.Sprintf("%x", rand.Int())
 				connLocker.Lock()
@@ -88,11 +102,10 @@ func RunWebsocketAsNode() {
 
 		fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
 
-		if command.Entry == "connect" {
+		if command.Entry == "connect" && len(command.Args) >= 2 {
 			fmt.Println("connecting")
-			sharedKey, _, _ := commands.Connect(command.Id, command.Args)
-			cipher = security.CreateCipher(sharedKey)
-			conn = conn
+			sharedKey, _, _ := commands.Connect(privateKey, command.Id, strings.Join(command.Args[1:], " "), command.Args[0])
+			cipher = cipherCreation.CreateCipher(sharedKey)
 			continue
 		}
 

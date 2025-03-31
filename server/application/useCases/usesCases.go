@@ -4,14 +4,15 @@ import (
 	"crypto/cipher"
 	"fmt"
 	"server2/application/entities"
-	"server2/security"
+	"server2/application/useCases/security"
 	"strings"
 
 	"github.com/gorilla/websocket"
 )
 
 type ParseCommandUseCase struct {
-	Cipher *cipher.AEAD
+	Cipher         *cipher.AEAD
+	ciphersUseCase security.CiphersUseCase
 }
 
 func (d *ParseCommandUseCase) Execute(str string) (entities.Command, error) {
@@ -20,7 +21,7 @@ func (d *ParseCommandUseCase) Execute(str string) (entities.Command, error) {
 	if *d.Cipher != nil {
 		encodedStr, hasPrefix := strings.CutPrefix(str, "#$")
 		if hasPrefix {
-			msg, err := security.DecipherMessageBase64(encodedStr, *d.Cipher)
+			msg, err := d.ciphersUseCase.DecipherMessageBase64(encodedStr, *d.Cipher)
 			if err != nil {
 				return entities.Command{}, err
 			}
@@ -126,10 +127,11 @@ func (uc *GetOrCreateUseCase) Execute(nodeID string, conn *websocket.Conn) (*ent
 }
 
 type CipherMessageUseCase struct {
+	ciphersUseCase security.CiphersUseCase
 }
 
 func (c *CipherMessageUseCase) Execute(message string, cipher *cipher.AEAD) ([]byte, error) {
-	base64Msg := security.CipherMessageBase64(message, *cipher)
+	base64Msg := c.ciphersUseCase.CipherMessageBase64(message, *cipher)
 	return append([]byte("#$"), base64Msg...), nil
 }
 

@@ -6,16 +6,10 @@ import (
 	"log"
 )
 
-var PrivateKey *ecdh.PrivateKey
-var PublicKey *ecdh.PublicKey
-
-func init() {
-	priv, pub := GenKeys()
-	PrivateKey = priv
-	PublicKey = pub
+type GenKeysUseCase struct {
 }
 
-func GenKeys() (*ecdh.PrivateKey, *ecdh.PublicKey) {
+func (gk GenKeysUseCase) GenKeys() (*ecdh.PrivateKey, *ecdh.PublicKey) {
 	priv, err := ecdh.P256().GenerateKey(rand.Reader)
 	if err != nil {
 		log.Fatal(err)

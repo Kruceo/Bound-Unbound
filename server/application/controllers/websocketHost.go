@@ -4,9 +4,11 @@
 package controllers
 
 import (
+	"crypto/ecdh"
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"server2/application/adapters"
 	"server2/application/controllers/api/v1/endpoints"
@@ -14,11 +16,22 @@ import (
 	usecases "server2/application/useCases"
 	"server2/application/useCases/commands"
 	"server2/application/useCases/handlers"
-	"server2/security"
+	"server2/application/useCases/security"
+
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+var privateKey *ecdh.PrivateKey
+var publicKey *ecdh.PublicKey
+
+func init() {
+	genKeysUseCase := security.GenKeysUseCase{}
+	priv, pub := genKeysUseCase.GenKeys()
+	privateKey = priv
+	publicKey = pub
+}
 
 const IsHost = true
 
@@ -36,7 +49,7 @@ var deleteNodeUseCAse = usecases.DeleteNodeUseCase{Repo: &nodeRepo}
 var getOrCreate = usecases.GetOrCreateUseCase{Repo: &nodeRepo}
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-
+	cipherCreation := security.CiphersUseCase{}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("WebSocket upgrade error:", err)
@@ -68,12 +81,17 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Println("[received]", command)
-		if command.Entry == "connect" {
+		if command.Entry == "connect" && len(command.Args) >= 2 {
 			fmt.Println("connecting")
-			sharedKey, name, _ := commands.Connect(command.Id, command.Args)
-			cipher := security.CreateCipher(sharedKey)
+			sharedKey, name, _ := commands.Connect(
+				privateKey,
+				command.Id,
+				strings.Join(command.Args[1:], " "),
+				command.Args[0],
+			)
+			cipher := cipherCreation.CreateCipher(sharedKey)
 			saveNodeUseCase.Execute(conn, name, cipher)
-			encodedPublicKey := base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
+			encodedPublicKey := base64.RawStdEncoding.EncodeToString(publicKey.Bytes())
 			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
 
 			go func() {
