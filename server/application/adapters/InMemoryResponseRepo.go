@@ -3,6 +3,7 @@ package adapters
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type InMemoryResponseRepository struct {
@@ -20,9 +21,20 @@ func (r *InMemoryResponseRepository) Set(id string, data string) error {
 }
 
 func (r *InMemoryResponseRepository) WaitForResponse(id string) error {
+	go func() {
+		ticker := time.NewTimer(30 * time.Second)
+		defer ticker.Stop()
+		<-ticker.C
+		fmt.Println("timeout for", id)
+		r.channel <- "_TIMEOUT_" + id
+	}()
+
 	for v := range r.channel {
 		if v == id {
 			return nil
+		}
+		if v == "_TIMEOUT_"+id {
+			return fmt.Errorf("timeout for response id %s", id)
 		}
 	}
 	return nil
