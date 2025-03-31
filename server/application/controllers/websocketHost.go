@@ -7,8 +7,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"server2/api/v1/endpoints"
+
 	"server2/application/adapters"
+	"server2/application/controllers/api/v1/endpoints"
 
 	usecases "server2/application/useCases"
 	"server2/application/useCases/commands"

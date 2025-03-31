@@ -53,15 +53,6 @@ type Node struct {
 	Cipher cipher.AEAD
 }
 
-func (client Node) Send(msg string, encrypt bool) error {
-	if encrypt {
-
-	} else {
-		client.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
-	}
-	return nil
-}
-
 type NodeRepository interface {
 	Save(node Node) (string, error)
 	Get(id string) *Node

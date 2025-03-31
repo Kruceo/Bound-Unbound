@@ -9,7 +9,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	v1 "server2/api/v1"
+	v1 "server2/application/controllers/api/v1"
+
 	"strings"
 	"time"
 )

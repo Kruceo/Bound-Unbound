@@ -7,8 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	// "server/bh.ResponseRepo"
-	v1 "server2/api/v1"
+	v1 "server2/application/controllers/api/v1"
 	"server2/application/entities"
 	usecases "server2/application/useCases"
 	"strings"

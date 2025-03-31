@@ -6,7 +6,8 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	v1 "server2/api/v1"
+
+	v1 "server2/application/controllers/api/v1"
 	usecases "server2/application/useCases"
 	"strings"
 
