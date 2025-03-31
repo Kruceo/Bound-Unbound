@@ -81,3 +81,13 @@ type GetStoredNodesUseCase struct {
 func (r GetStoredNodesUseCase) Execute() []string {
 	return r.Repo.IDs()
 }
+
+// delete
+
+type DeleteNodeUseCase struct {
+	Repo entities.NodeRepository
+}
+
+func (r DeleteNodeUseCase) Execute(id string) error {
+	return r.Repo.Delete(id)
+}

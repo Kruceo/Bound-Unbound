@@ -94,6 +94,7 @@ func RunWebsocketAsNode() {
 			sharedKey, _, _ := commands.Connect(command.Id, command.Args)
 			cipher := security.CreateCipher(sharedKey)
 			host.Cipher = cipher
+			host.Conn = conn
 			continue
 		}
 
@@ -105,8 +106,9 @@ func RunWebsocketAsNode() {
 			continue
 		}
 		connLocker.Lock()
-		host.Send("_ add response "+command.Id+" "+response, true)
+		err = host.Send("_ add response "+command.Id+" "+response, true)
 		connLocker.Unlock()
+		fmt.Println(err)
 	}
 }
 

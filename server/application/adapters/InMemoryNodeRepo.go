@@ -34,6 +34,11 @@ func (r *InMemoryNodeRepository) IDs() []string {
 	return ids
 }
 
+func (r *InMemoryNodeRepository) Delete(id string) error {
+	delete(r.data, id)
+	return nil
+}
+
 func NewInMemoryNodeRepository() InMemoryNodeRepository {
 	return InMemoryNodeRepository{data: make(map[string]entities.Node), mu: sync.Mutex{}}
 }

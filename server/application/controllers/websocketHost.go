@@ -14,6 +14,7 @@ import (
 	"server2/application/useCases/commands"
 	"server2/application/useCases/handlers"
 	"server2/security"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -30,6 +31,7 @@ var nodeRepo adapters.InMemoryNodeRepository = adapters.NewInMemoryNodeRepositor
 var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryResponseRepository()
 
 var saveNodeUseCase = usecases.SaveNodeUseCase{Repo: &nodeRepo}
+var deleteNodeUseCAse = usecases.DeleteNodeUseCase{Repo: &nodeRepo}
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
@@ -63,11 +65,29 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[received]", command)
 		if command.Entry == "connect" {
 			fmt.Println("connecting")
-			sharedKey, _, _ := commands.Connect(command.Id, command.Args)
+			sharedKey, name, _ := commands.Connect(command.Id, command.Args)
 			cipher := security.CreateCipher(sharedKey)
-			saveNodeUseCase.Execute(entities.Node{Conn: conn, Name: "any", Cipher: cipher})
+			saveNodeUseCase.Execute(entities.Node{Conn: conn, Name: name, Cipher: cipher})
 			encodedPublicKey := base64.RawStdEncoding.EncodeToString(security.PublicKey.Bytes())
 			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
+
+			go func() {
+				ticker := time.NewTicker(5 * time.Second)
+				defer ticker.Stop()
+				for range ticker.C {
+					err := conn.WriteMessage(websocket.PingMessage, nil)
+					if err != nil {
+
+						if deleteNodeUseCAse.Execute(conn.RemoteAddr().String()) != nil {
+							fmt.Println("problem to remove node from repository")
+							break
+						}
+						fmt.Println(name, "disconnected")
+						break
+					}
+				}
+			}()
+
 			continue
 		}
 
