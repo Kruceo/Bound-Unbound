@@ -30,7 +30,7 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
 
 	if r.Method == "GET" {
 

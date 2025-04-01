@@ -21,7 +21,7 @@ func (bh V1Handlers) ConnectionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
 
 	type ConnectionR struct {
 		Name          string

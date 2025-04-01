@@ -20,14 +20,14 @@ type V1Handlers struct {
 	ResponseRepo entities.ResponsesReporisory
 }
 
-var cipherMessage = usecases.CipherMessageUseCase{}
+var cipherMessage = usecases.CipherCommandMessageUseCase{}
 
 func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 	if v1.CorsHandler(w, r, "GET, POST, DELETE, OPTIONS") {
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
 
 	if _, err := v1.JWTMiddleware(w, r); err != nil {
 		return

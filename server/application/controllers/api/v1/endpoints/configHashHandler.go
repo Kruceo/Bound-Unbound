@@ -25,7 +25,7 @@ func (bh *V1Handlers) ConfigHashHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
 
 	type HashR struct {
 		Hash string

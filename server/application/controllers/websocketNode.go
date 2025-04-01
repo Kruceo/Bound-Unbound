@@ -8,129 +8,101 @@ import (
 	"crypto/ecdh"
 	"encoding/base64"
 	"fmt"
-	"math/rand"
-	"server2/application/adapters"
+	"server2/application/entities"
 	usecases "server2/application/useCases"
 
 	"server2/application/useCases/handlers"
 	"server2/application/useCases/security"
-	"server2/enviroment"
-
-	"server2/utils"
-	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-func connectWebsocket() *websocket.Conn {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws", enviroment.MAIN_SERVER_ADDRESS), nil)
-	if err != nil {
-		fmt.Println("Connection error:", err)
-		return nil
-	}
-	return conn
-}
-
-// var nodeRepo adapters.InMemoryNodeRepository = adapters.NewInMemoryNodeRepository()
-var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryResponseRepository()
-
-// var saveNode = usecases.SaveNodeUseCase{Repo: &nodeRepo}
-// var getOrCreate = usecases.CreateNodeUseCase{}
-var cipherCreation = security.CiphersUseCase{}
-
 const IsHost = false
 
-var publicKey *ecdh.PublicKey
-var createSharedKey security.CreateSharedKeyUseCase
-
-func init() {
-	genKeysUseCase := security.GenKeysUseCase{}
-	priv, pub := genKeysUseCase.GenKeys()
-	publicKey = pub
-	createSharedKey = security.NewCreateSharedKeyUseCase(*priv)
+type WebsocketClientController struct {
+	name                 string
+	responseRepo         entities.ResponsesReporisory
+	cipherCreation       security.CiphersUseCase
+	publicKey            *ecdh.PublicKey
+	cipherCommandMessage usecases.CipherCommandMessageUseCase
+	hostConn             *websocket.Conn
+	handleCommands       handlers.HandleCommandsUseCase
+	mainCipher           *cipher.AEAD
+	sharedKeyCreation    security.CreateSharedKeyUseCase
 }
 
-func RunWebsocketAsNode() {
-	name := utils.GetEnvOrDefault("NAME", fmt.Sprintf("%x", rand.Int()))
-
-	var conn *websocket.Conn
-	var connLocker sync.Mutex = sync.Mutex{}
-	var cipher cipher.AEAD
-	parse := usecases.ParseCommandUseCase{Cipher: &cipher}
-	cipherMessage := usecases.CipherMessageUseCase{}
-	HandleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
-
-	for {
-		if conn == nil {
-			fmt.Println("trying connection")
-			conn = connectWebsocket()
-			go func() {
-				if conn == nil {
-					return
-				}
-				fmt.Println("sending and receiving keys")
-
-				var encodedPublicKey = base64.RawStdEncoding.EncodeToString(publicKey.Bytes())
-
-				responseId := fmt.Sprintf("%x", rand.Int())
-				connLocker.Lock()
-				defer connLocker.Unlock()
-				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s connect %s %s", responseId, encodedPublicKey, name)))
-				// host.Send(, false)
-			}()
-			if conn == nil {
-				time.Sleep(3 * time.Second)
-			}
-			continue
-		}
-		fmt.Println("listening commands")
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println("Read error:", err)
-			conn.Close()
-			conn = nil
-			continue
-		}
-
-		command, err := parse.Execute(string(msg))
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
-
-		if command.Entry == "connect" && len(command.Args) >= 2 {
-			fmt.Println("connecting")
-			sharedKey, err := createSharedKey.Execute(command.Args[0])
-			if err != nil {
-				panic(err)
-			}
-			cipher = cipherCreation.CreateCipher(sharedKey)
-			continue
-		}
-
-		response, err := HandleCommands.Execute(command)
-
-		fmt.Println("response=", response, "\nerror=", err)
-		if err != nil {
-			fmt.Println("error")
-			continue
-		}
-		connLocker.Lock()
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("_ add response %s %s", command.Id, response), &cipher)
-		if err != nil {
-			connLocker.Unlock()
-			fmt.Println(err)
-			continue
-		}
-		conn.WriteMessage(websocket.TextMessage, encryptedMessage)
-		connLocker.Unlock()
-		fmt.Println(err)
+func NewWebsocketClientController(name string, hostConn *websocket.Conn, responseRepo entities.ResponsesReporisory, privateKey *ecdh.PrivateKey, publicKey *ecdh.PublicKey) WebsocketClientController {
+	handleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
+	cuc := security.CiphersUseCase{}
+	cmuc := usecases.NewCipherMessageUseCase()
+	skuc := security.NewCreateSharedKeyUseCase(*privateKey)
+	return WebsocketClientController{
+		name:                 name,
+		responseRepo:         responseRepo,
+		handleCommands:       handleCommands,
+		cipherCreation:       cuc,
+		cipherCommandMessage: cmuc,
+		publicKey:            publicKey,
+		sharedKeyCreation:    skuc,
+		hostConn:             hostConn,
 	}
 }
 
-func RunWebsocketAsHost() {
-	panic("not implemented")
+func (wsc *WebsocketClientController) ExecuteStringAsCommand(cmdStr string) error {
+	parse := usecases.ParseCommandUseCase{Cipher: wsc.mainCipher}
+	command, err := parse.Execute(cmdStr)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
+
+	if command.Entry == "connect" && len(command.Args) >= 2 {
+		fmt.Println("connecting")
+		sharedKey, err := wsc.sharedKeyCreation.Execute(command.Args[0])
+		if err != nil {
+			return err
+		}
+		newCipher := wsc.cipherCreation.CreateCipher(sharedKey)
+		wsc.mainCipher = &newCipher
+		return nil
+	}
+
+	response, err := wsc.handleCommands.Execute(command)
+	if err != nil {
+		return err
+	}
+	return wsc.SendEncryptedResponse(command.Id, response)
+}
+
+func (wsc *WebsocketClientController) Connect() error {
+	fmt.Println("connecting with host")
+	var encodedPublicKey = base64.RawStdEncoding.EncodeToString(wsc.publicKey.Bytes())
+	err := wsc.hostConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "randomico")))
+	return err
+
+}
+
+func (wsc *WebsocketClientController) SetConnection(conn *websocket.Conn) {
+	wsc.hostConn = conn
+}
+
+func (wsc *WebsocketClientController) HasConnection() bool {
+	return wsc.hostConn != nil
+}
+
+func (wsc *WebsocketClientController) ReadConn() (string, error) {
+	_, content, err := wsc.hostConn.ReadMessage()
+	return string(content), err
+}
+
+func (wsc *WebsocketClientController) SendEncryptedResponse(id string, str string) error {
+	encryptedMessage, err := wsc.cipherCommandMessage.Execute(fmt.Sprintf("_ add response %s %s", id, str), wsc.mainCipher)
+	if err != nil {
+		fmt.Println("Encryption error:", err)
+		return err
+	}
+
+	wsc.hostConn.WriteMessage(websocket.TextMessage, encryptedMessage)
+	return nil
 }

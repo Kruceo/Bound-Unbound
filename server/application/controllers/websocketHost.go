@@ -4,60 +4,148 @@
 package controllers
 
 import (
+	"crypto/cipher"
 	"crypto/ecdh"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"server2/application/adapters"
-	"server2/application/controllers/api/v1/endpoints"
+	"server2/application/entities"
 
 	usecases "server2/application/useCases"
 
 	"server2/application/useCases/handlers"
 	"server2/application/useCases/security"
 
-	"time"
-
 	"github.com/gorilla/websocket"
 )
 
-var publicKey *ecdh.PublicKey
-var createSharedKey security.CreateSharedKeyUseCase
-
-func init() {
-	genKeysUseCase := security.GenKeysUseCase{}
-	priv, pub := genKeysUseCase.GenKeys()
-	publicKey = pub
-	createSharedKey = security.NewCreateSharedKeyUseCase(*priv)
-}
-
 const IsHost = true
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all connections (Change this for security)
-	},
+type HostController struct {
+	upgrader             websocket.Upgrader
+	nodeRepo             entities.NodeRepository
+	responseRepo         entities.ResponsesReporisory
+	saveNode             usecases.SaveNodeUseCase
+	deleteNode           usecases.DeleteNodeUseCase
+	getOrCreate          usecases.GetOrCreateUseCase
+	getNode              usecases.GetNodeUseCase
+	publicKey            ecdh.PublicKey
+	mainCipher           *cipher.AEAD
+	cipherCommandMessage usecases.CipherCommandMessageUseCase
+	sharedKeyCreation    security.CreateSharedKeyUseCase
+	ciphersCreation      security.CiphersUseCase
+	handleCommands       handlers.HandleCommandsUseCase
 }
 
-var nodeRepo adapters.InMemoryNodeRepository = adapters.NewInMemoryNodeRepository()
-var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryResponseRepository()
+func NewHostController(nodeRepo entities.NodeRepository, responseRepo entities.ResponsesReporisory, privateKey ecdh.PrivateKey, publicKey ecdh.PublicKey) HostController {
+	var upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true // Allow all connections (Change this for security)
+		},
+	}
 
-var saveNodeUseCase = usecases.SaveNodeUseCase{Repo: &nodeRepo}
-var deleteNodeUseCAse = usecases.DeleteNodeUseCase{Repo: &nodeRepo}
-var getOrCreate = usecases.GetOrCreateUseCase{Repo: &nodeRepo}
+	var saveNodeUseCase = usecases.SaveNodeUseCase{Repo: &nodeRepo}
+	var deleteNodeUseCase = usecases.DeleteNodeUseCase{Repo: &nodeRepo}
+	var getOrCreateNode = usecases.GetOrCreateUseCase{Repo: &nodeRepo}
+	var getNode = usecases.GetNodeUseCase{Repo: &nodeRepo}
+	skuc := security.NewCreateSharedKeyUseCase(privateKey)
+	cuc := security.CiphersUseCase{}
+	var commandHandler = handlers.HandleCommandsUseCase{ResponseRepo: responseRepo}
+	return HostController{
+		upgrader:             upgrader,
+		saveNode:             saveNodeUseCase,
+		deleteNode:           deleteNodeUseCase,
+		nodeRepo:             nodeRepo,
+		responseRepo:         responseRepo,
+		getNode:              getNode,
+		getOrCreate:          getOrCreateNode,
+		publicKey:            publicKey,
+		mainCipher:           nil,
+		cipherCommandMessage: usecases.NewCipherMessageUseCase(),
+		sharedKeyCreation:    skuc,
+		ciphersCreation:      cuc,
+		handleCommands:       commandHandler,
+	}
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	cipherCreation := security.CiphersUseCase{}
-	conn, err := upgrader.Upgrade(w, r, nil)
+}
+
+func (wsc *HostController) SendEncryptedMessageToNode(nodeId string, id string, str string) error {
+	encryptedMessage, err := wsc.cipherCommandMessage.Execute(fmt.Sprintf("_ add response %s %s", id, str), wsc.mainCipher)
+	if err != nil {
+		fmt.Println("Encryption error:", err)
+		return err
+	}
+
+	node := wsc.getNode.Execute(nodeId)
+	if node == nil {
+		return fmt.Errorf("node not found: %s", nodeId)
+	}
+
+	return node.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
+}
+
+func (wsc *HostController) ExecuteStringAsCommand(cmdStr string, conn *websocket.Conn, cipher *cipher.AEAD) error {
+	parseCommand := usecases.ParseCommandUseCase{Cipher: cipher}
+	command, err := parseCommand.Execute(string(cmdStr))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	// fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
+	fmt.Println(command.Entry)
+	fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++=")
+	if command.Entry == "connect" && len(command.Args) >= 2 {
+		fmt.Println("receiving connection")
+		name := strings.Join(command.Args[1:], " ")
+		sharedKey, err := wsc.sharedKeyCreation.Execute(command.Args[0])
+		if err != nil {
+			return err
+		}
+		cipher := wsc.ciphersCreation.CreateCipher(sharedKey)
+		nodeID, err := wsc.saveNode.Execute(conn, name, cipher)
+		if err != nil {
+			return err
+		}
+		wsc.SendConnectToNode(nodeID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	_, err = wsc.handleCommands.Execute(command)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wsc *HostController) SendConnectToNode(nodeId string) error {
+	fmt.Println("connecting with", nodeId)
+	var encodedPublicKey = base64.RawStdEncoding.EncodeToString(wsc.publicKey.Bytes())
+
+	node := wsc.getNode.Execute(nodeId)
+	if node == nil {
+		return fmt.Errorf("node not found: %s", nodeId)
+	}
+
+	err := node.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
+	return err
+}
+
+func (wsc *HostController) AddNodeToRepo(conn *websocket.Conn, name string, cipher cipher.AEAD) (string, error) {
+	return wsc.saveNode.Execute(conn, name, cipher)
+}
+
+func (wsc *HostController) OnMessageHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsc.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("WebSocket upgrade error:", err)
 		return
 	}
-	defer conn.Close()
-
-	fmt.Println("Client connected")
 
 	for {
 		_, msg, err := conn.ReadMessage()
@@ -65,98 +153,16 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Read error:", err)
 			break
 		}
-
 		nodeID := conn.RemoteAddr().String()
-		node, err := getOrCreate.Execute(nodeID, conn)
+		node, err := wsc.getOrCreate.Execute(nodeID, conn)
 		if err != nil {
 			fmt.Println("Node error:", err)
 			break
 		}
-		parseCommand := usecases.ParseCommandUseCase{Cipher: &node.Cipher}
-		command, err := parseCommand.Execute(string(msg))
 
-		if err != nil {
-			fmt.Println(err)
+		if err := wsc.ExecuteStringAsCommand(string(msg), conn, &node.Cipher); err != nil {
+			fmt.Println("Command error:", err)
 			break
 		}
-
-		fmt.Println("[received]", command)
-		if command.Entry == "connect" && len(command.Args) >= 2 {
-			fmt.Println("connecting")
-			name := strings.Join(command.Args[1:], " ")
-			sharedKey, err := createSharedKey.Execute(command.Args[0])
-			if err != nil {
-				panic(err)
-			}
-			cipher := cipherCreation.CreateCipher(sharedKey)
-			saveNodeUseCase.Execute(conn, name, cipher)
-			encodedPublicKey := base64.RawStdEncoding.EncodeToString(publicKey.Bytes())
-			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
-
-			go func() {
-				ticker := time.NewTicker(5 * time.Second)
-				defer ticker.Stop()
-				for range ticker.C {
-					err := conn.WriteMessage(websocket.PingMessage, nil)
-					if err != nil {
-
-						if deleteNodeUseCAse.Execute(conn.RemoteAddr().String()) != nil {
-							fmt.Println("problem to remove node from repository")
-							break
-						}
-						fmt.Println(name, "disconnected")
-						break
-					}
-				}
-			}()
-
-			continue
-		}
-
-		handleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
-		_, err = handleCommands.Execute(command)
-
-		if err != nil {
-			fmt.Println("command error:", err)
-			continue
-		}
 	}
-}
-
-func RunWebsocketAsHost() {
-
-	v1Handlers := endpoints.V1Handlers{NodeRepo: &nodeRepo, ResponseRepo: &responseRepo}
-
-	http.HandleFunc("/ws", handleWebSocket)
-
-	http.HandleFunc("/auth/login", endpoints.AuthLoginHandler)
-
-	http.HandleFunc("/auth/token", endpoints.AuthClientToken)
-
-	http.HandleFunc("/auth/register", endpoints.AuthRegisterHandler)
-
-	http.HandleFunc("/auth/status", endpoints.AuthHasUserHandler)
-
-	http.HandleFunc("/auth/reset", endpoints.AuthResetAccountHandler)
-
-	http.HandleFunc("/v1/connections", v1Handlers.ConnectionsHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/blocks", v1Handlers.BlockAddressHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/redirects", v1Handlers.RedirectAddressHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/reload", v1Handlers.ReloadHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/confighash", v1Handlers.ConfigHashHandler)
-
-	fmt.Println("WebSocket server running on ws://localhost:8080/ws")
-
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println("Server error:", err)
-	}
-}
-
-func RunWebsocketAsNode() {
-	panic("not implemented")
 }

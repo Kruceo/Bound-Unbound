@@ -10,36 +10,29 @@ import (
 )
 
 type HandleCommandsUseCase struct {
-	ResponseRepo entities.ResponsesReporisory
+	ResponseRepo *entities.ResponsesReporisory
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
 	if command.IsEncrypted {
-		if command.Entry == "block" {
+		switch command.Entry {
+		case "block":
 			return commands.Block(command.Id, false, command.Args)
-		}
-		if command.Entry == "unblock" {
+		case "unblock":
 			return commands.Block(command.Id, true, command.Args)
-
-		}
-		if command.Entry == "list" {
+		case "list":
 			return commands.List(command.Id, command.Args)
-
-		}
-		if command.Entry == "reload" {
+		case "reload":
 			err := commands.ReloadConfig(command.Id)
 			return "", err
-		}
-		if command.Entry == "redirect" {
+		case "redirect":
 			return commands.AddRedirect(command.Id, command.Args)
-
-		}
-		if command.Entry == "unredirect" {
+		case "unredirect":
 			return commands.RemoveRedirect(command.Id, command.Args)
-
-		}
-		if command.Entry == "add" {
-			return commands.Add(command.Id, command.Args, r.ResponseRepo)
+		case "add":
+			return commands.Add(command.Id, command.Args, *r.ResponseRepo)
+		default:
+			return "", fmt.Errorf("comando desconhecido: %s", command.Entry)
 		}
 	}
 	return "", fmt.Errorf("command not found: %s", command.Raw)

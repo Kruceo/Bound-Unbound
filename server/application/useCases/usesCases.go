@@ -18,7 +18,7 @@ type ParseCommandUseCase struct {
 func (d *ParseCommandUseCase) Execute(str string) (entities.Command, error) {
 	message := str
 	encrypted := false
-	if *d.Cipher != nil {
+	if d.Cipher != nil {
 		encodedStr, hasPrefix := strings.CutPrefix(str, "#$")
 		if hasPrefix {
 			msg, err := d.ciphersUseCase.DecipherMessageBase64(encodedStr, *d.Cipher)
@@ -31,10 +31,12 @@ func (d *ParseCommandUseCase) Execute(str string) (entities.Command, error) {
 	}
 
 	spl := strings.Split(message, " ")
+
 	id, entry, args := spl[0], spl[1], spl[2:]
 
 	newArgs := []string{}
 	mode := false
+
 	for _, v := range args {
 		if strings.HasPrefix(v, "\"") {
 			newArgs = append(newArgs, "")
@@ -59,16 +61,16 @@ func (d *ParseCommandUseCase) Execute(str string) (entities.Command, error) {
 // Save
 
 type SaveNodeUseCase struct {
-	Repo entities.NodeRepository
+	Repo *entities.NodeRepository
 }
 
-func (r SaveNodeUseCase) Execute(Conn *websocket.Conn, Name string, Cipher cipher.AEAD) (string, error) {
-	return r.Repo.Save(entities.Node{Conn: Conn, Name: Name, Cipher: Cipher})
+func (r *SaveNodeUseCase) Execute(Conn *websocket.Conn, Name string, Cipher cipher.AEAD) (string, error) {
+	return (*r.Repo).Save(entities.Node{Conn: Conn, Name: Name, Cipher: Cipher})
 }
 
 type CreateNodeUseCase struct{}
 
-func (r CreateNodeUseCase) Execute(conn *websocket.Conn, name string, cipher cipher.AEAD) (*entities.Node, error) {
+func (r *CreateNodeUseCase) Execute(conn *websocket.Conn, name string, cipher cipher.AEAD) (*entities.Node, error) {
 	node := entities.Node{Conn: conn, Name: name, Cipher: cipher}
 	if len(name) == 0 {
 		return nil, fmt.Errorf("bad name: %s", name)
@@ -82,11 +84,11 @@ func (r CreateNodeUseCase) Execute(conn *websocket.Conn, name string, cipher cip
 // Get
 
 type GetNodeUseCase struct {
-	Repo entities.NodeRepository
+	Repo *entities.NodeRepository
 }
 
-func (r GetNodeUseCase) Execute(id string) *entities.Node {
-	return r.Repo.Get(id)
+func (r *GetNodeUseCase) Execute(id string) *entities.Node {
+	return (*r.Repo).Get(id)
 }
 
 // ids
@@ -102,22 +104,22 @@ func (r GetStoredNodesUseCase) Execute() []string {
 // delete
 
 type DeleteNodeUseCase struct {
-	Repo entities.NodeRepository
+	Repo *entities.NodeRepository
 }
 
-func (r DeleteNodeUseCase) Execute(id string) error {
-	return r.Repo.Delete(id)
+func (r *DeleteNodeUseCase) Execute(id string) error {
+	return (*r.Repo).Delete(id)
 }
 
 type GetOrCreateUseCase struct {
-	Repo entities.NodeRepository
+	Repo *entities.NodeRepository
 }
 
 func (uc *GetOrCreateUseCase) Execute(nodeID string, conn *websocket.Conn) (*entities.Node, error) {
-	node := uc.Repo.Get(nodeID)
+	node := (*uc.Repo).Get(nodeID)
 	if node == nil {
 		node = &entities.Node{Conn: conn, Name: "nameless", Cipher: nil}
-		_, err := uc.Repo.Save(*node)
+		_, err := (*uc.Repo).Save(*node)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
@@ -126,15 +128,15 @@ func (uc *GetOrCreateUseCase) Execute(nodeID string, conn *websocket.Conn) (*ent
 	return node, nil
 }
 
-type CipherMessageUseCase struct {
+type CipherCommandMessageUseCase struct {
 	ciphersUseCase security.CiphersUseCase
 }
 
-func (c *CipherMessageUseCase) Execute(message string, cipher *cipher.AEAD) ([]byte, error) {
+func (c *CipherCommandMessageUseCase) Execute(message string, cipher *cipher.AEAD) ([]byte, error) {
 	base64Msg := c.ciphersUseCase.CipherMessageBase64(message, *cipher)
 	return append([]byte("#$"), base64Msg...), nil
 }
 
-func NewCipherMessageUseCase(cipher cipher.AEAD) CipherMessageUseCase {
-	return CipherMessageUseCase{}
+func NewCipherMessageUseCase() CipherCommandMessageUseCase {
+	return CipherCommandMessageUseCase{}
 }

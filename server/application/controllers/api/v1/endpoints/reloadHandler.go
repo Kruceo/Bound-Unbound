@@ -24,7 +24,7 @@ func (bh *V1Handlers) ReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: bh.NodeRepo}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
 
 	connectionName := r.PathValue("connection")
 	client := getNode.Execute(connectionName)
@@ -39,13 +39,16 @@ func (bh *V1Handlers) ReloadHandler(w http.ResponseWriter, r *http.Request) {
 		v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 		return
 	}
+
 	err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
+
 	if err != nil {
 		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 		return
 	}
 
 	err = bh.ResponseRepo.WaitForResponse(id)
+	fmt.Println(err)
 	if err != nil {
 		v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 		return
