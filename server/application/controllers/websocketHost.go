@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"server2/application/entities"
+	"server2/application/infrastructure"
 
 	usecases "server2/application/useCases"
 
@@ -25,8 +25,8 @@ const IsHost = true
 
 type HostController struct {
 	upgrader             websocket.Upgrader
-	nodeRepo             entities.NodeRepository
-	responseRepo         entities.ResponsesReporisory
+	nodeRepo             infrastructure.NodeRepository
+	responseRepo         infrastructure.ResponsesReporisory
 	saveNode             usecases.SaveNodeUseCase
 	deleteNode           usecases.DeleteNodeUseCase
 	getOrCreate          usecases.GetOrCreateUseCase
@@ -39,7 +39,7 @@ type HostController struct {
 	handleCommands       handlers.HandleCommandsUseCase
 }
 
-func NewHostController(nodeRepo entities.NodeRepository, responseRepo entities.ResponsesReporisory, privateKey ecdh.PrivateKey, publicKey ecdh.PublicKey) HostController {
+func NewHostController(nodeRepo infrastructure.NodeRepository, responseRepo infrastructure.ResponsesReporisory, privateKey ecdh.PrivateKey, publicKey ecdh.PublicKey) HostController {
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true // Allow all connections (Change this for security)

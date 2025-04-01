@@ -1,14 +1,14 @@
 //go:build host
 // +build host
 
-package runners
+package cmd
 
 import (
 	"fmt"
 	"net/http"
-	"server2/application/adapters"
 	"server2/application/controllers"
 	"server2/application/controllers/api/v1/endpoints"
+	"server2/application/infrastructure/adapters"
 	"server2/application/useCases/security"
 )
 

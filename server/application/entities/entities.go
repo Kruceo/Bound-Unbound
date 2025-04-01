@@ -52,17 +52,3 @@ type Node struct {
 	Name   string
 	Cipher cipher.AEAD
 }
-
-type NodeRepository interface {
-	Save(node Node) (string, error)
-	Get(id string) *Node
-	Delete(id string) error
-	IDs() []string
-}
-
-type ResponsesReporisory interface {
-	Set(id string, data string) error
-	WaitForResponse(id string) error
-	ReadResponse(id string) (string, error)
-	DeleteResponse(id string) error
-}

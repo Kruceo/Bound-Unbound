@@ -6,11 +6,12 @@ package handlers
 import (
 	"fmt"
 	"server2/application/entities"
+	"server2/application/infrastructure"
 	"server2/application/useCases/handlers/commands"
 )
 
 type HandleCommandsUseCase struct {
-	ResponseRepo entities.ResponsesReporisory
+	ResponseRepo infrastructure.ResponsesReporisory
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {

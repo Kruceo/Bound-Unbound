@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	v1 "server2/application/controllers/api/v1"
-	"server2/application/entities"
+	"server2/application/infrastructure"
 	usecases "server2/application/useCases"
 	"strings"
 
@@ -16,8 +16,8 @@ import (
 )
 
 type V1Handlers struct {
-	NodeRepo     entities.NodeRepository
-	ResponseRepo entities.ResponsesReporisory
+	NodeRepo     infrastructure.NodeRepository
+	ResponseRepo infrastructure.ResponsesReporisory
 }
 
 var cipherMessage = usecases.CipherCommandMessageUseCase{}

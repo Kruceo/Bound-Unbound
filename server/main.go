@@ -1,7 +1,7 @@
 package main
 
 import (
-	"server2/application/controllers"
+	"server2/cmd"
 	"server2/enviroment"
 
 	"github.com/joho/godotenv"
@@ -13,9 +13,5 @@ func init() {
 }
 
 func main() {
-	if controllers.IsHost {
-		controllers.RunWebsocketAsHost()
-		return
-	}
-	controllers.RunWebsocketAsNode()
+	cmd.Run()
 }

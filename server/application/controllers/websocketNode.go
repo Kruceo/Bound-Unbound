@@ -8,7 +8,7 @@ import (
 	"crypto/ecdh"
 	"encoding/base64"
 	"fmt"
-	"server2/application/entities"
+	"server2/application/infrastructure"
 	usecases "server2/application/useCases"
 
 	"server2/application/useCases/handlers"
@@ -21,7 +21,7 @@ const IsHost = false
 
 type WebsocketClientController struct {
 	name                 string
-	responseRepo         entities.ResponsesReporisory
+	responseRepo         infrastructure.ResponsesReporisory
 	cipherCreation       security.CiphersUseCase
 	publicKey            *ecdh.PublicKey
 	cipherCommandMessage usecases.CipherCommandMessageUseCase
@@ -31,7 +31,7 @@ type WebsocketClientController struct {
 	sharedKeyCreation    security.CreateSharedKeyUseCase
 }
 
-func NewWebsocketClientController(name string, hostConn *websocket.Conn, responseRepo entities.ResponsesReporisory, privateKey *ecdh.PrivateKey, publicKey *ecdh.PublicKey) WebsocketClientController {
+func NewWebsocketClientController(name string, hostConn *websocket.Conn, responseRepo infrastructure.ResponsesReporisory, privateKey *ecdh.PrivateKey, publicKey *ecdh.PublicKey) WebsocketClientController {
 	handleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
 	cuc := security.CiphersUseCase{}
 	cmuc := usecases.NewCipherMessageUseCase()

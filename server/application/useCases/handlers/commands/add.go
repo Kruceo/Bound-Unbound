@@ -2,11 +2,11 @@ package commands
 
 import (
 	"fmt"
-	"server2/application/entities"
+	"server2/application/infrastructure"
 	"strings"
 )
 
-func Add(id string, args []string, responseRepo entities.ResponsesReporisory) (string, error) {
+func Add(id string, args []string, responseRepo infrastructure.ResponsesReporisory) (string, error) {
 	if len(args) < 2 {
 		return "", fmt.Errorf("wrong Syntax: (%v)\nuse 'id' add <response|connection> data", args)
 	}

@@ -1,12 +1,13 @@
 //go:build !host
 // +build !host
 
-package runners
+package cmd
 
 import (
 	"fmt"
-	"server2/application/adapters"
+
 	"server2/application/controllers"
+	"server2/application/infrastructure/adapters"
 	"server2/application/useCases/security"
 	"server2/enviroment"
 	"time"
@@ -48,7 +49,6 @@ func Run() {
 			}
 			continue
 		}
-		fmt.Println("listening commands")
 
 		msg, err := controller.ReadConn()
 
