@@ -41,7 +41,11 @@ func (r *InMemoryResponseRepository) WaitForResponse(id string) error {
 }
 
 func (r *InMemoryResponseRepository) ReadResponse(id string) (string, error) {
-	return r.data[id], nil
+	r.mu.Lock()
+	d := r.data[id]
+	delete(r.data, id)
+	r.mu.Unlock()
+	return d, nil
 }
 
 func (r *InMemoryResponseRepository) DeleteResponse(id string) error {
