@@ -7,36 +7,48 @@ import (
 )
 
 type InMemoryResponseRepository struct {
-	data    map[string]string
-	mu      sync.Mutex
-	channel chan string
+	data     map[string]string
+	mu       sync.Mutex
+	channels map[string]chan string
 }
 
 func (r *InMemoryResponseRepository) Set(id string, data string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.data[id] = data
-	r.channel <- id
+	if _, exists := r.channels[id]; !exists {
+		r.channels[id] = make(chan string)
+	}
+
+	r.channels[id] <- id
 	return nil
 }
 
 func (r *InMemoryResponseRepository) WaitForResponse(id string) error {
+	r.mu.Lock()
+	if _, exists := r.channels[id]; !exists {
+		r.channels[id] = make(chan string, 1)
+	}
+	ch := r.channels[id]
+	r.mu.Unlock()
+
 	go func() {
-		ticker := time.NewTimer(30 * time.Second)
-		defer ticker.Stop()
-		<-ticker.C
-		fmt.Println("timeout for", id)
-		r.channel <- "_TIMEOUT_" + id
+		time.Sleep(2 * time.Second)
+		ch <- "_TIMEOUT_" + id
 	}()
 
-	for v := range r.channel {
+	for v := range ch {
+		fmt.Println(v, id)
 		if v == id {
+			fmt.Println("returned")
 			return nil
 		}
 		if v == "_TIMEOUT_"+id {
+			fmt.Println("timeout for", id)
 			return fmt.Errorf("timeout for response id %s", id)
 		}
 	}
+
 	return nil
 }
 
@@ -53,7 +65,7 @@ func (r *InMemoryResponseRepository) DeleteResponse(id string) error {
 }
 
 func NewInMemoryResponseRepository() InMemoryResponseRepository {
-	return InMemoryResponseRepository{data: make(map[string]string), mu: sync.Mutex{}, channel: make(chan string)}
+	return InMemoryResponseRepository{data: make(map[string]string), mu: sync.Mutex{}, channels: make(map[string]chan string)}
 }
 
 // type ResponsesReporisory interface {
