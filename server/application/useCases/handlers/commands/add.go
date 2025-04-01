@@ -15,9 +15,6 @@ func Add(id string, args []string, responseRepo entities.ResponsesReporisory) (s
 		// add response(arg0) <id>(arg1) data(rest args concatened)
 		data := strings.Join(args[2:], " ")
 		responseRepo.Set(args[1], data)
-		// memory.ResponseCH <- args[1]
 	}
-
-	// fmt.Println(connections)
 	return "ok", nil
 }

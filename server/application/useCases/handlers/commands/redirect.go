@@ -72,7 +72,6 @@ func AddRedirect(id string, args []string) (string, error) {
 		}
 		archiveMap[from] = FRedirect{Type: recordType, To: to, LocalOnly: localOnly} // Adiciona ao mapa sem desperdiçar memória
 	}
-	// return nil
 	defer archive.Close()
 
 	localOnly := false
@@ -96,10 +95,6 @@ func AddRedirect(id string, args []string) (string, error) {
 			panic(err)
 		}
 	}
-
-	// local-zone: "google.com." redirect
-	// local-data: "google.com. 3600 IN CNAME facebook.com."
-	// fmt.Println(args[0] + " blocked")
 	return "ok", nil
 }
 

@@ -14,7 +14,7 @@ import (
 	"server2/application/controllers/api/v1/endpoints"
 
 	usecases "server2/application/useCases"
-	"server2/application/useCases/commands"
+
 	"server2/application/useCases/handlers"
 	"server2/application/useCases/security"
 
@@ -23,14 +23,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var privateKey *ecdh.PrivateKey
 var publicKey *ecdh.PublicKey
+var createSharedKey security.CreateSharedKeyUseCase
 
 func init() {
 	genKeysUseCase := security.GenKeysUseCase{}
 	priv, pub := genKeysUseCase.GenKeys()
-	privateKey = priv
 	publicKey = pub
+	createSharedKey = security.NewCreateSharedKeyUseCase(*priv)
 }
 
 const IsHost = true
@@ -83,12 +83,11 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[received]", command)
 		if command.Entry == "connect" && len(command.Args) >= 2 {
 			fmt.Println("connecting")
-			sharedKey, name, _ := commands.Connect(
-				privateKey,
-				command.Id,
-				strings.Join(command.Args[1:], " "),
-				command.Args[0],
-			)
+			name := strings.Join(command.Args[1:], " ")
+			sharedKey, err := createSharedKey.Execute(command.Args[0])
+			if err != nil {
+				panic(err)
+			}
 			cipher := cipherCreation.CreateCipher(sharedKey)
 			saveNodeUseCase.Execute(conn, name, cipher)
 			encodedPublicKey := base64.RawStdEncoding.EncodeToString(publicKey.Bytes())

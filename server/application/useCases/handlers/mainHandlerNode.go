@@ -6,7 +6,7 @@ package handlers
 import (
 	"fmt"
 	"server2/application/entities"
-	commands "server2/application/useCases/commands"
+	"server2/application/useCases/handlers/commands"
 )
 
 type HandleCommandsUseCase struct {
@@ -14,16 +14,6 @@ type HandleCommandsUseCase struct {
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
-	// if command.Entry == "setcipher" && r.cipher != nil && *r.cipher == nil {
-	// 	c, err := commands.SetCipher(command.Id, command.Args)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return "", err
-	// 	}
-	// 	cptr := &c
-	// 	*r.cipher = cptr
-	// 	return "", nil
-	// }
 	if command.IsEncrypted {
 		if command.Entry == "block" {
 			return commands.Block(command.Id, false, command.Args)

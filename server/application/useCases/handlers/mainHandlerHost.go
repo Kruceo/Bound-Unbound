@@ -6,7 +6,7 @@ package handlers
 import (
 	"fmt"
 	"server2/application/entities"
-	commands "server2/application/useCases/commands"
+	"server2/application/useCases/handlers/commands"
 )
 
 type HandleCommandsUseCase struct {
@@ -14,7 +14,6 @@ type HandleCommandsUseCase struct {
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
-	fmt.Println(command)
 	if command.IsEncrypted {
 		if command.Entry == "add" {
 			return commands.Add(command.Id, command.Args, r.ResponseRepo)

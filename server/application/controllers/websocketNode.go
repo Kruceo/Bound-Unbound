@@ -11,11 +11,10 @@ import (
 	"math/rand"
 	"server2/application/adapters"
 	usecases "server2/application/useCases"
-	"server2/application/useCases/commands"
+
 	"server2/application/useCases/handlers"
 	"server2/application/useCases/security"
 	"server2/enviroment"
-	"strings"
 
 	"server2/utils"
 	"sync"
@@ -37,19 +36,19 @@ func connectWebsocket() *websocket.Conn {
 var responseRepo adapters.InMemoryResponseRepository = adapters.NewInMemoryResponseRepository()
 
 // var saveNode = usecases.SaveNodeUseCase{Repo: &nodeRepo}
-var getOrCreate = usecases.CreateNodeUseCase{}
+// var getOrCreate = usecases.CreateNodeUseCase{}
 var cipherCreation = security.CiphersUseCase{}
 
 const IsHost = false
 
-var privateKey *ecdh.PrivateKey
 var publicKey *ecdh.PublicKey
+var createSharedKey security.CreateSharedKeyUseCase
 
 func init() {
 	genKeysUseCase := security.GenKeysUseCase{}
 	priv, pub := genKeysUseCase.GenKeys()
-	privateKey = priv
 	publicKey = pub
+	createSharedKey = security.NewCreateSharedKeyUseCase(*priv)
 }
 
 func RunWebsocketAsNode() {
@@ -104,7 +103,10 @@ func RunWebsocketAsNode() {
 
 		if command.Entry == "connect" && len(command.Args) >= 2 {
 			fmt.Println("connecting")
-			sharedKey, _, _ := commands.Connect(privateKey, command.Id, strings.Join(command.Args[1:], " "), command.Args[0])
+			sharedKey, err := createSharedKey.Execute(command.Args[0])
+			if err != nil {
+				panic(err)
+			}
 			cipher = cipherCreation.CreateCipher(sharedKey)
 			continue
 		}

@@ -42,7 +42,6 @@ func Block(id string, unblock bool, args []string) (string, error) {
 		for _, addr := range strings.Split(args[0], ",") {
 			archiveMap[addr] = struct{}{}
 		}
-		// archiveMap[args[0]] = struct{}{}
 	}
 	archive.Truncate(0)
 	for k := range archiveMap {
@@ -52,8 +51,5 @@ func Block(id string, unblock bool, args []string) (string, error) {
 			panic(err)
 		}
 	}
-
-	// host.AddResponse(id, "ok")
-	// fmt.Println(args[0] + " blocked")
 	return "ok", nil
 }
