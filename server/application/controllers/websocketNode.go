@@ -32,7 +32,7 @@ type WebsocketClientController struct {
 }
 
 func NewWebsocketClientController(name string, hostConn *websocket.Conn, responseRepo infrastructure.ResponsesReporisory, privateKey *ecdh.PrivateKey, publicKey *ecdh.PublicKey) WebsocketClientController {
-	handleCommands := handlers.HandleCommandsUseCase{ResponseRepo: &responseRepo}
+	handleCommands := handlers.HandleCommandsUseCase{ResponseRepo: responseRepo}
 	cuc := security.CiphersUseCase{}
 	cmuc := usecases.NewCipherMessageUseCase()
 	skuc := security.NewCreateSharedKeyUseCase(*privateKey)

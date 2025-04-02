@@ -1,6 +1,3 @@
-//go:build host
-// +build host
-
 package controllers
 
 import (
@@ -20,8 +17,6 @@ import (
 
 	"github.com/gorilla/websocket"
 )
-
-const IsHost = true
 
 type HostController struct {
 	upgrader             websocket.Upgrader

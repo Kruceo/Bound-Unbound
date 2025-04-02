@@ -17,7 +17,8 @@ var BLOCK_FILEPATH string
 var UNBOUND_CONF_FILEPATH string
 var RELOAD_COMMAND []string
 var MAIN_SERVER_ADDRESS string
-var NAME string = "NAMELESS"
+var NAME string
+var SESSION_SECRET string
 
 func InitLocals() {
 	NAME = utils.GetEnvOrDefault("NAME", "Undefined")

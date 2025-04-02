@@ -1,4 +1,4 @@
-package endpoints
+package v1
 
 import (
 	"encoding/json"
@@ -7,31 +7,18 @@ import (
 	"math/rand"
 	"net/http"
 
-	v1 "server2/application/controllers/api/v1"
-	"server2/application/infrastructure"
+	"server2/application/presentation"
 	usecases "server2/application/useCases"
 	"strings"
 
 	"github.com/gorilla/websocket"
 )
 
-type V1Handlers struct {
-	NodeRepo     infrastructure.NodeRepository
-	ResponseRepo infrastructure.ResponsesReporisory
-}
-
 var cipherMessage = usecases.CipherCommandMessageUseCase{}
 
-func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
-	if v1.CorsHandler(w, r, "GET, POST, DELETE, OPTIONS") {
-		return
-	}
+func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 
-	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
-
-	if _, err := v1.JWTMiddleware(w, r); err != nil {
-		return
-	}
+	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 
 	if r.Method == "GET" {
 		type BlockedNames struct {
@@ -41,7 +28,7 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
@@ -50,26 +37,26 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list blocked", id), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
-		var b v1.Response[BlockedNames]
+		var b presentation.Response[BlockedNames]
 
-		rawNames, err := bh.ResponseRepo.ReadResponse(id)
+		rawNames, err := bh.responseRepo.ReadResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
@@ -80,7 +67,7 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		}
 		encoded, err := json.Marshal(b)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "JSON_ENCODING", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Add("Content-Type", "application/json")
@@ -95,14 +82,14 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
 		}
 
@@ -110,12 +97,12 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusBadRequest)
+			bh.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusBadRequest)
 			return
 		}
 
 		if len(b.Names) < 1 {
-			v1.FastErrorResponse(w, r, "BODY_FORMAT", http.StatusBadRequest)
+			bh.fastErrorResponses.Execute(w, r, "BODY_FORMAT", http.StatusBadRequest)
 			return
 		}
 
@@ -125,21 +112,21 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s block %s", id, strings.Join(b.Names, ",")), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
-		bh.ResponseRepo.ReadResponse(id)
+		bh.responseRepo.ReadResponse(id)
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
@@ -150,14 +137,14 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
 		}
 
@@ -165,7 +152,7 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
 			return
 		}
 
@@ -173,18 +160,18 @@ func (bh *V1Handlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unblock %s", id, strings.Join(b.Names, ",")), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 		w.Write(nil)

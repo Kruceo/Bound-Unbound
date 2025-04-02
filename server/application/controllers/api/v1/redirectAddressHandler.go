@@ -1,4 +1,4 @@
-package endpoints
+package v1
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	v1 "server2/application/controllers/api/v1"
+	"server2/application/presentation"
 	usecases "server2/application/useCases"
 	"strings"
 
@@ -21,23 +21,15 @@ type RedirectBody struct {
 	LocalZone  bool
 }
 
-func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
-	if v1.CorsHandler(w, r, "GET, POST, DELETE, OPTIONS") {
-		return
-	}
-
-	if _, err := v1.JWTMiddleware(w, r); err != nil {
-		return
-	}
-
-	getNode := usecases.GetNodeUseCase{Repo: &bh.NodeRepo}
+func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
+	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 
 	if r.Method == "GET" {
 
 		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
@@ -45,26 +37,26 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list redirects", id), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		var b v1.Response[[]RedirectBody] = v1.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
+		var b presentation.Response[[]RedirectBody] = presentation.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
 
-		rawRedirects, err := bh.ResponseRepo.ReadResponse(id)
+		rawRedirects, err := bh.responseRepo.ReadResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
@@ -82,7 +74,7 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 
 		decoded, err := json.Marshal(b)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "JSON_ENCODING", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Add("Content-Type", "application/json")
@@ -92,14 +84,14 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
 		}
 
@@ -107,7 +99,7 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
 			return
 		}
 
@@ -121,18 +113,18 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 		w.Write(nil)
@@ -141,14 +133,14 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
-			v1.FastErrorResponse(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "READ_BODY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
 		}
 
@@ -156,7 +148,7 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "JSON_DECODE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
 			return
 		}
 
@@ -164,18 +156,18 @@ func (bh *V1Handlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Requ
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unredirect %s", id, b.Domain), &client.Cipher)
 
 		if err != nil {
-			v1.FastErrorResponse(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 
-		err = bh.ResponseRepo.WaitForResponse(id)
+		err = bh.responseRepo.WaitForResponse(id)
 		if err != nil {
-			v1.FastErrorResponse(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
+			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
 

@@ -15,3 +15,13 @@ type ResponsesReporisory interface {
 	ReadResponse(id string) (string, error)
 	DeleteResponse(id string) error
 }
+
+type UserRepository interface {
+	Save(name, password string, role uint8, recoveryCode string) (string, error)
+	Get(id string) (*entities.User, error)
+	Delete(id string) error
+	SearchByName(regex string) ([]*entities.User, error)
+	SearchByRole(role uint8) ([]*entities.User, error)
+	FindOneByName(regex string) (*entities.User, error)
+	FindOneByRole(role uint8) (*entities.User, error)
+}

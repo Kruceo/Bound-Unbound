@@ -6,40 +6,30 @@ package cmd
 import (
 	"fmt"
 	"net/http"
-	"server2/application/controllers"
-	"server2/application/controllers/api/v1/endpoints"
 	"server2/application/infrastructure/adapters"
+	"server2/application/presentation/middlewares"
+	"server2/application/presentation/routers"
 	"server2/application/useCases/security"
+
+	"github.com/gorilla/mux"
 )
 
 func Run() {
 	fmt.Println("HOST")
+
 	priv, pub := security.GenKeysUseCase{}.GenKeys()
 	nodeRepo := adapters.NewInMemoryNodeRepository()
 	responseRepo := adapters.NewInMemoryResponseRepository()
-	websocketController := controllers.NewHostController(&nodeRepo, &responseRepo, *priv, *pub)
-	v1Handlers := endpoints.V1Handlers{NodeRepo: &nodeRepo, ResponseRepo: &responseRepo}
+	userRepo := adapters.NewFileSystemUserRepo("users.temp.json")
 
-	http.HandleFunc("/ws", websocketController.OnMessageHandler)
+	authMiddleware := middlewares.NewJWTMiddleware("payet").AuthMiddleware
 
-	http.HandleFunc("/auth/login", endpoints.AuthLoginHandler)
+	r := mux.NewRouter()
+	apiRouter := routers.SetupNodesRouter(r, &nodeRepo, &responseRepo)
+	apiRouter.Use(authMiddleware)
 
-	http.HandleFunc("/auth/token", endpoints.AuthClientToken)
+	routers.SetupAuthRouter(r, userRepo, "payet")
+	routers.SetupWebsocketRouter(r, &nodeRepo, &responseRepo, priv, pub)
 
-	http.HandleFunc("/auth/register", endpoints.AuthRegisterHandler)
-
-	http.HandleFunc("/auth/status", endpoints.AuthHasUserHandler)
-
-	http.HandleFunc("/auth/reset", endpoints.AuthResetAccountHandler)
-
-	http.HandleFunc("/v1/connections", v1Handlers.ConnectionsHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/blocks", v1Handlers.BlockAddressHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/redirects", v1Handlers.RedirectAddressHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/reload", v1Handlers.ReloadHandler)
-
-	http.HandleFunc("/v1/connections/{connection}/confighash", v1Handlers.ConfigHashHandler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", r)
 }

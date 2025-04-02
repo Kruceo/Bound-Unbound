@@ -1,12 +1,9 @@
 package entities
 
 import (
-	"crypto/cipher"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/gorilla/websocket"
 )
 
 type Command struct {
@@ -45,10 +42,4 @@ func (command Command) ArgAsFloat(index int) (float32, error) {
 		return 0, err
 	}
 	return float32(value), nil
-}
-
-type Node struct {
-	Conn   *websocket.Conn
-	Name   string
-	Cipher cipher.AEAD
 }

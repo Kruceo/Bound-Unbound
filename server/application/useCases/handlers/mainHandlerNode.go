@@ -11,7 +11,7 @@ import (
 )
 
 type HandleCommandsUseCase struct {
-	ResponseRepo *infrastructure.ResponsesReporisory
+	ResponseRepo infrastructure.ResponsesReporisory
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
@@ -31,7 +31,7 @@ func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error
 		case "unredirect":
 			return commands.RemoveRedirect(command.Id, command.Args)
 		case "add":
-			return commands.Add(command.Id, command.Args, *r.ResponseRepo)
+			return commands.Add(command.Id, command.Args, r.ResponseRepo)
 		default:
 			return "", fmt.Errorf("comando desconhecido: %s", command.Entry)
 		}

@@ -16,7 +16,7 @@ import (
 )
 
 func connectWebsocket(address string) *websocket.Conn {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws", address), nil)
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s/ws/node", address), nil)
 	if err != nil {
 		fmt.Println("Connection error:", err)
 		return nil
