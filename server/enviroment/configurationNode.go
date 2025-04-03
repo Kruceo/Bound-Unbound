@@ -19,6 +19,7 @@ var RELOAD_COMMAND []string
 var MAIN_SERVER_ADDRESS string
 var NAME string
 var SESSION_SECRET string
+var CORS_ORIGIN string
 
 func InitLocals() {
 	NAME = utils.GetEnvOrDefault("NAME", "Undefined")
