@@ -10,6 +10,7 @@ import (
 	"server2/application/presentation/middlewares"
 	"server2/application/presentation/routers"
 	"server2/application/useCases/security"
+	"server2/enviroment"
 
 	"github.com/gorilla/mux"
 )
@@ -21,15 +22,16 @@ func Run() {
 	nodeRepo := adapters.NewInMemoryNodeRepository()
 	responseRepo := adapters.NewInMemoryResponseRepository()
 	userRepo := adapters.NewFileSystemUserRepo("users.temp.json")
-
-	authMiddleware := middlewares.NewJWTMiddleware("payet").AuthMiddleware
+	authMiddleware := middlewares.NewJWTMiddleware(enviroment.SESSION_SECRET).AuthMiddleware
+	corsMiddleware := middlewares.NewCorsMiddleware(enviroment.CORS_ORIGIN, "Authorization", "Content-Type", "Cookie").CorsMiddleware
 
 	r := mux.NewRouter()
 	apiRouter := routers.SetupNodesRouter(r, &nodeRepo, &responseRepo)
-	apiRouter.Use(authMiddleware)
-
-	routers.SetupAuthRouter(r, userRepo, "payet")
+	authRouter := routers.SetupAuthRouter(r, userRepo, enviroment.SESSION_SECRET)
 	routers.SetupWebsocketRouter(r, &nodeRepo, &responseRepo, priv, pub)
+
+	apiRouter.Use(corsMiddleware, authMiddleware)
+	authRouter.Use(corsMiddleware)
 
 	http.ListenAndServe(":8080", r)
 }

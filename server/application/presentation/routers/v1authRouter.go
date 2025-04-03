@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, sessionSecret string) {
+func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, sessionSecret string) *mux.Router {
 
 	authController := v1.NewV1AuthHandlers(userRepo, sessionSecret)
 
@@ -17,4 +17,5 @@ func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, sess
 	router.HandleFunc("/register", authController.AuthRegisterHandler).Methods("POST")
 	router.HandleFunc("/status", authController.AuthHasUserHandler).Methods("GET")
 	router.HandleFunc("/reset", authController.AuthResetAccountHandler).Methods("POST")
+	return router
 }
