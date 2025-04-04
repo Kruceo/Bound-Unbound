@@ -11,13 +11,12 @@ import (
 	"server2/application/presentation/routers"
 	"server2/application/useCases/security"
 	"server2/enviroment"
+	"server2/utils"
 
 	"github.com/gorilla/mux"
 )
 
 func Run() {
-	fmt.Println("HOST")
-
 	priv, pub := security.GenKeysUseCase{}.GenKeys()
 	nodeRepo := adapters.NewInMemoryNodeRepository()
 	responseRepo := adapters.NewInMemoryResponseRepository()
@@ -32,6 +31,7 @@ func Run() {
 
 	apiRouter.Use(corsMiddleware, authMiddleware)
 	authRouter.Use(corsMiddleware)
-
-	http.ListenAndServe(":8080", r)
+	port := utils.GetEnvOrDefaultNumber("port", 8080)
+	fmt.Println("listening", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
