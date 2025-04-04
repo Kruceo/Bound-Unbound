@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"server2/application/presentation"
 )
@@ -173,6 +174,10 @@ type ResetAccountR struct {
 	SecretCode string `json:"secretCode"`
 }
 
+type ResetAccountW struct {
+	RouteId string `json:"routeId"`
+}
+
 func (a *v1AuthHandlers) AuthResetAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	var body []byte
@@ -201,18 +206,79 @@ func (a *v1AuthHandlers) AuthResetAccountHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	responseEncoded, err := json.Marshal(presentation.Response[bool]{Message: "ok", Data: true})
+	routeId, err := a.routesRepo.Gen(user.ID + "," + r.RemoteAddr)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "GENROUTE", http.StatusInternalServerError)
+		return
+	}
+
+	responseEncoded, err := json.Marshal(presentation.Response[ResetAccountW]{Message: "ok", Data: ResetAccountW{RouteId: routeId}})
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "JSON_ENCODE", http.StatusInternalServerError)
 		return
 	}
 
-	// do anithing to change the user
-	// ...
-	// ...
-	panic("not implemented")
+	w.Write(responseEncoded)
+}
+
+type NewPasswordR struct {
+	RouteId  string `json:"routeId"`
+	Password string `json:"password"`
+}
+
+func (a *v1AuthHandlers) AuthResetAccountPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	var body []byte
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "LOGIN", http.StatusInternalServerError)
+		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
+		return
+	}
+
+	var b NewPasswordR
+	err = json.Unmarshal(body, &b)
+
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
+		return
+	}
+
+	info, routeExists := a.routesRepo.Exists(b.RouteId)
+	if !routeExists {
+		a.fastErrorResponses.Execute(w, r, "NOT_FOUND", http.StatusNotFound)
+		return
+	}
+
+	splited := strings.Split(info, ",")
+	userId, originalAddr := splited[0], splited[1]
+
+	if originalAddr != r.RemoteAddr {
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+	user, err := a.userRepo.Get(userId)
+	if err != nil {
+		fmt.Println(err)
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	passwordHash := a.hashPassword.Hash(b.Password)
+
+	extraSecretCode := make([]byte, 12)
+	rand.Read(extraSecretCode)
+
+	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
+	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
+
+	err = a.userRepo.Update(userId, user.Username, string(passwordHash), user.Role, string(hashedSecretCode))
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "UPDATE_USER", http.StatusInternalServerError)
+		return
+	}
+
+	responseEncoded, err := json.Marshal(presentation.Response[RegisterW]{Message: "ok", Data: RegisterW{SecretCode: extraSecretCodeB64}})
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_ENCODE", http.StatusInternalServerError)
 		return
 	}
 

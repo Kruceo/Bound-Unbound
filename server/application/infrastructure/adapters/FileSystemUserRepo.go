@@ -3,6 +3,7 @@ package adapters
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"regexp"
 	"server2/application/entities"
@@ -57,13 +58,44 @@ func (f *FileSystemUserRepo) Save(name, password string, role uint8, recoveryCod
 		return "", err
 	}
 
-	id := name // Usando o nome como ID (ajuste se precisar)
-	users[id] = &entities.User{Username: name, Password: password, Role: role, RecoveryCode: recoveryCode}
+	id := name // in newer repositories use other things as id (uuid, sequential), this adapter is temp
+
+	if _, exists := users[id]; exists {
+		return "", fmt.Errorf("user id already exists: %s", id)
+	}
+
+	user, err := entities.NewUser(id, name, password, role, recoveryCode)
+	if err != nil {
+		return "", err
+	}
+
+	users[id] = &user
 
 	if err := f.saveUsers(users); err != nil {
 		return "", err
 	}
 	return id, nil
+}
+
+func (f *FileSystemUserRepo) Update(id, name, password string, role uint8, secretCodeHash string) error {
+	users, err := f.loadUsers()
+	if err != nil {
+		return err
+	}
+	if _, exists := users[id]; !exists {
+		return fmt.Errorf("user not found: %s", id)
+	}
+	users[id].Username = name
+	users[id].SetPassword(password)
+	users[id].Role = role
+	users[id].RecoveryCode = secretCodeHash
+
+	err = f.saveUsers(users)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (f *FileSystemUserRepo) Get(id string) (*entities.User, error) {

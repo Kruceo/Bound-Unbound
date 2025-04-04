@@ -17,5 +17,6 @@ func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, sess
 	router.HandleFunc("/register", authController.AuthRegisterHandler).Methods("POST")
 	router.HandleFunc("/status", authController.AuthHasUserHandler).Methods("GET")
 	router.HandleFunc("/reset", authController.AuthResetAccountHandler).Methods("POST")
+	router.HandleFunc("/reset/pwd", authController.AuthResetAccountPasswordHandler).Methods("POST")
 	return router
 }

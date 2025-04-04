@@ -2,12 +2,14 @@ package v1
 
 import (
 	"server2/application/infrastructure"
+	"server2/application/infrastructure/adapters"
 	"server2/application/presentation"
 	usecases "server2/application/useCases"
 )
 
 type v1AuthHandlers struct {
 	userRepo           infrastructure.UserRepository
+	routesRepo         infrastructure.RoutesRepository
 	hashPassword       usecases.PassowrdHashUseCase
 	jwtManager         *usecases.JwtUseCase
 	fastErrorResponses presentation.FastErrorResponses
@@ -19,5 +21,6 @@ func NewV1AuthHandlers(userRepo infrastructure.UserRepository, sessionSecret str
 		jwtManager:         usecases.NewJWTUseCase(sessionSecret),
 		hashPassword:       usecases.NewPassowrdHashUseCase(),
 		fastErrorResponses: presentation.NewFastErrorResponses(),
+		routesRepo:         adapters.NewInMemoryRoutesRepository(),
 	}
 }

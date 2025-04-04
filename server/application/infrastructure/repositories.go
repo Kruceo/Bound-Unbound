@@ -18,12 +18,18 @@ type ResponsesReporisory interface {
 
 type UserRepository interface {
 	Save(name, password string, role uint8, recoveryCode string) (string, error)
+	Update(id, name, password string, role uint8, secretCode string) error
 	Get(id string) (*entities.User, error)
 	Delete(id string) error
 	SearchByName(regex string) ([]*entities.User, error)
 	SearchByRole(role uint8) ([]*entities.User, error)
 	FindOneByName(regex string) (*entities.User, error)
 	FindOneByRole(role uint8) (*entities.User, error)
+}
+
+type RoutesRepository interface {
+	Gen(string) (string, error)
+	Exists(string) (string, bool)
 }
 
 type RequestBlocker interface {
