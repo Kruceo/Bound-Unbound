@@ -1,8 +1,8 @@
-import { apiAxios, apiUrl } from "../../../api/api"
+import { apiAxios, ApiResponse, apiUrl } from "../../../api/api"
 
 const encoder = new TextEncoder();
 
-export async function onRegisterAction(username: string, password: string) {
+export async function onRegisterAction(username: string, password: string) :Promise<ApiResponse<{ secretCode: string }>>{
   const url = apiUrl("/auth/register")
   
   const data = encoder.encode(password);
@@ -16,10 +16,10 @@ export async function onRegisterAction(username: string, password: string) {
       Password: hashedPassword
     })
 
-    return res.data as { Data: { SecretCode: string }, Error: boolean, Message: string, ErrorCode: string }
+    return res.data
   } catch (error: any) {
     console.log(error)
-    return error.response.data as { Message: string, ErrorCode: "AUTH", Error: boolean, Data: undefined }
+    return error.response.data
   }
 
 

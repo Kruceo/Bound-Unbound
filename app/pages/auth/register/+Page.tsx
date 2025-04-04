@@ -31,8 +31,8 @@ export default function Page() {
 
     const re = await onRegisterAction(user.toString(), password.toString())
 
-    if (!re || re.Error) {
-      switch (re.ErrorCode) {
+    if (!re || re.error) {
+      switch (re.errorCode) {
         case "OVERWRITING_REGISTER":
           setProblem("Isn't possible to register now")
           break;
@@ -44,7 +44,7 @@ export default function Page() {
       }
       return
     }
-    setSecretCode(re.Data?.SecretCode)
+    setSecretCode(re.data?.secretCode)
     // window.localStorage.setItem("session",re.Data.Token)
 
   }

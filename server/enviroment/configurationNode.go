@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"server2/utils"
 	"strings"
-	"unbound-mngr-host/utils"
 )
 
 var FORWARD_FILEPATH string
@@ -17,8 +17,12 @@ var BLOCK_FILEPATH string
 var UNBOUND_CONF_FILEPATH string
 var RELOAD_COMMAND []string
 var MAIN_SERVER_ADDRESS string
+var NAME string
+var SESSION_SECRET string
+var CORS_ORIGIN string
 
 func InitLocals() {
+	NAME = utils.GetEnvOrDefault("NAME", "Undefined")
 	MAIN_SERVER_ADDRESS = utils.GetEnvOrDefault("MAIN_SERVER_ADDRESS", "127.0.0.1:8080")
 	RELOAD_COMMAND = strings.Split(utils.GetEnvOrDefault("UNBOUND_RELOAD_COMMAND", "unbound-control reload"), " ")
 	FORWARD_FILEPATH = utils.GetEnvOrDefault("FORWARD_FILEPATH", "/opt/unbound/etc/unbound/forward_records.conf")

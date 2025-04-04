@@ -1,7 +1,5 @@
 import Input from "../../../components/Input";
-// import { onRegisterAction } from "./Page.telefunc";
 import "./Page.less";
-// import { navigate } from "vike/client/router";
 import { useState } from "react";
 import { onResetAccount } from "./Page.telefunc";
 import { navigate } from "vike/client/router";
@@ -16,22 +14,24 @@ export default function Page() {
   }
   const [submitEnabled, setSubmitEnabled] = useState(true)
 
-  async function resetHandler(e: React.FormEvent<HTMLFormElement>){
+  async function resetHandler(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitEnabled(false)
     const formData = new FormData(e.currentTarget)
 
+    const user = formData.get('user')?.toString()
     const sc = formData.get('secret-code')?.toString()
 
-    if (!sc){
+    if (!sc||!user) {
       setSubmitEnabled(true)
       setProblem("This code is not valid")
-      return 
-    
+      return
+
     }
-    if(await onResetAccount(sc)){
-      navigate('/auth/register')
-    }else{
+    const res = await onResetAccount(user,sc)
+    if (!res.error && res.data?.routeId) {
+      navigate(`/auth/reset-pwd/${res.data.routeId}`)
+    } else {
       setSubmitEnabled(true)
       setProblem("This code is not valid")
     }
@@ -45,6 +45,7 @@ export default function Page() {
           <h2>Account Recovery</h2>
           <p>When you sign up, is displayed a recovery code, use it to reset your account.</p>
           <div className="inputs">
+            <Input onInput={inputHandler} name="user" placeholder="Type your username here" type="text" title="User" required />
             <Input onInput={inputHandler} name="secret-code" placeholder="Type your code here" type="text" title="Recovery Code" required />
           </div>
           {/* {problem} */}

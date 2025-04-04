@@ -25,12 +25,12 @@ export default function Page() {
 
     const re = await onLoginAction(user.toString(), password.toString())
 
-    if (!re || re.Error || !re.Data) {
-      setProblem(re?.ErrorCode)
+    if (!re || re.error || !re.data) {
+      setProblem(re?.errorCode)
       return
     }
 
-    document.cookie = `session=${re.Data.Token}; SameSite=none; Secure; Path=/`
+    document.cookie = `session=${re.data.token}; SameSite=none; Secure; Path=/`
     // window.localStorage.setItem("session",re.Data.Token)
     navigate("/")
   }

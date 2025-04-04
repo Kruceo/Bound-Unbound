@@ -1,8 +1,8 @@
-import { apiAxios, apiUrl } from "../../../api/api"
+import { apiAxios, ApiResponse, apiUrl } from "../../../api/api"
 
 const encoder = new TextEncoder();
 
-export async function onLoginAction(username: string, password: string) {
+export async function onLoginAction(username: string, password: string): Promise<ApiResponse<{ token: string }>> {
   const data = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -14,11 +14,10 @@ export async function onLoginAction(username: string, password: string) {
       User: username,
       Password: hashedPassword
     })
-
-    return res.data as { Message: string, Data: { Token: string }, Error?: boolean,ErrorCode:undefined }
+    console.log(res.data)
+    return res.data
   } catch (error: any) {
-    return error.response.data as { Message: string, ErrorCode: "AUTH",Error:boolean, Data:undefined }
-    return null
+    return error.response.data
   }
 
 

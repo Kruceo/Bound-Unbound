@@ -8,7 +8,7 @@ The project make the management of multiple Unbound servers easy, concentrating 
 
 - ✅ Easily block domains
 - ✅ Easily redirect domains (A,AAAA,CNAME,MX,TXT)
-- ✅ Encryption over Host - Unbound Client communication
+- ✅ Encryption over Host and Unbound node communication
 - ✅ Reload Unbound
 - ✅ Frontend - Host Auth
 
@@ -16,6 +16,9 @@ The project make the management of multiple Unbound servers easy, concentrating 
 ### Side Targets
 - ✅ Block multiple login requests
 - ✅ Store client ip in JWT and compare with client request 
+- ✅ Password reset method
+- ❌ Multiple users, with custom roles and nodes assigned to each
+- ❌ Admin will create "links" to other other person create a guest user
 - ❌ Verify if unbound is running after a server reload, if not, restore last config file
 - ❌ Modify Unbound configuration remotely
 - ❌ Change some host configuration remotely

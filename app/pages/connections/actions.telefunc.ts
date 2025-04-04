@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios'
-import { apiAxios, apiUrl } from '../../api/api'
+import { apiAxios, ApiResponse, apiUrl } from '../../api/api'
 
-export async function onUnblockAction(connectionId: string, domains: string[]) {
+export async function onUnblockAction(connectionId: string, domains: string[]): Promise<ApiResponse<any>> {
   const url = apiUrl(`v1/connections/${connectionId}/blocks`)
   try {
     const res = await apiAxios.delete(url, {
@@ -9,12 +9,12 @@ export async function onUnblockAction(connectionId: string, domains: string[]) {
       data: { Names: domains },
     })
     return await res.data
-  } catch (error) {
-    return (error as AxiosError).response?.data
+  } catch (error: any) {
+    return error.response?.data
   }
 }
 
-export async function onBlockAction(connectionId: string, domains: string[]) {
+export async function onBlockAction(connectionId: string, domains: string[]): Promise<ApiResponse<any>> {
   const url = apiUrl(`v1/connections/${connectionId}/blocks`)
   try {
     const res = await apiAxios.post(url, {
@@ -23,12 +23,12 @@ export async function onBlockAction(connectionId: string, domains: string[]) {
       headers: { "Content-Type": "application/json" }
     })
     return await res.data
-  } catch (error) {
-    return (error as AxiosError).response?.data
+  } catch (error:any) {
+    return error.response?.data
   }
 }
 
-export async function onNewRedirectAction(connectionId: string, from: string, recordType: string, to: string, localZone: boolean) {
+export async function onNewRedirectAction(connectionId: string, from: string, recordType: string, to: string, localZone: boolean): Promise<ApiResponse<any>> {
   const url = apiUrl(`v1/connections/${connectionId}/redirects`)
   try {
     const res = await apiAxios.post(url, {
@@ -40,8 +40,8 @@ export async function onNewRedirectAction(connectionId: string, from: string, re
       headers: { "Content-Type": "application/json" },
     })
     return await res.data
-  } catch (error) {
-    return (error as AxiosError).response?.data
+  } catch (error:any) {
+    return error.response?.data
   }
 }
 
@@ -72,12 +72,12 @@ export async function onGetConfigHash(connectionId: string): Promise<ConfigHashR
   }
 }
 
-export async function onReloadActions(connectionId: string) {
+export async function onReloadActions(connectionId: string) :Promise<ApiResponse<any>> {
   const url = apiUrl(`v1/connections/${connectionId}/reload`)
   try {
     const res = await apiAxios.post(url)
     return await res.data
-  } catch (error) {
-    return (error as AxiosError).response?.data
+  } catch (error:any) {
+    return error.response?.data
   }
 }
