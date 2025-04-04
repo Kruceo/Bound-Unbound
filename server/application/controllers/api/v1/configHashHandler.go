@@ -9,17 +9,18 @@ import (
 	"server2/application/presentation"
 	usecases "server2/application/useCases"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
+type HashR struct {
+	Hash string `json:"hash"`
+}
+
 func (bh *V1APIHandlers) ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
 	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
-
-	type HashR struct {
-		Hash string
-	}
-
-	connectionName := r.PathValue("connection")
+	vars := mux.Vars(r)
+	connectionName := vars["connection"]
 	client := getNode.Execute(connectionName)
 	if client == nil {
 		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)

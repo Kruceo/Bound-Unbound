@@ -78,7 +78,7 @@ func (wsc *WebsocketClientController) ExecuteStringAsCommand(cmdStr string) erro
 func (wsc *WebsocketClientController) Connect() error {
 	fmt.Println("connecting with host")
 	var encodedPublicKey = base64.RawStdEncoding.EncodeToString(wsc.publicKey.Bytes())
-	err := wsc.hostConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "randomico")))
+	err := wsc.hostConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, wsc.name)))
 	return err
 
 }

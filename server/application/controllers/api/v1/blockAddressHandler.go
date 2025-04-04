@@ -11,20 +11,27 @@ import (
 	usecases "server2/application/useCases"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
 var cipherMessage = usecases.CipherCommandMessageUseCase{}
 
+type BlockedNamesW struct {
+	Names []string `json:"names"`
+}
+type BlockedNamesR struct {
+	Names []string `json:"names"`
+}
+
 func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 
+	vars := mux.Vars(r)
+	connectionName := vars["connection"]
+
 	if r.Method == "GET" {
-		type BlockedNames struct {
-			Names []string
-		}
-		connectionName := r.PathValue("connection")
 
 		client := getNode.Execute(connectionName)
 		if client == nil {
@@ -52,7 +59,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
-		var b presentation.Response[BlockedNames]
+		var b presentation.Response[BlockedNamesW]
 
 		rawNames, err := bh.responseRepo.ReadResponse(id)
 		if err != nil {
@@ -76,10 +83,6 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		return
 	} else if r.Method == "POST" {
 
-		type BlockedNames struct {
-			Names []string
-		}
-		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
@@ -93,7 +96,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		var b BlockedNames
+		var b BlockedNamesR
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
@@ -130,11 +133,6 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-
-		type BlockedNames struct {
-			Names []string
-		}
-		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
@@ -148,7 +146,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		var b BlockedNames
+		var b BlockedNamesR
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {

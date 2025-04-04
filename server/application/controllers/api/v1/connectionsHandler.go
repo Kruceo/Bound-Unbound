@@ -8,6 +8,11 @@ import (
 	usecases "server2/application/useCases"
 )
 
+type ConnectionW struct {
+	Name          string `json:"name"`
+	RemoteAddress string `json:"remoteAddress"`
+}
+
 func (bh V1APIHandlers) ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		return
@@ -15,14 +20,10 @@ func (bh V1APIHandlers) ConnectionsHandler(w http.ResponseWriter, r *http.Reques
 
 	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 
-	type ConnectionR struct {
-		Name          string
-		RemoteAddress string
-	}
-	var b presentation.Response[[]ConnectionR] = presentation.Response[[]ConnectionR]{Data: make([]ConnectionR, 0), Message: ""}
+	var b presentation.Response[[]ConnectionW] = presentation.Response[[]ConnectionW]{Data: make([]ConnectionW, 0), Message: ""}
 	for _, v := range bh.nodeRepo.IDs() {
 		node := getNode.Execute(v)
-		b.Data = append(b.Data, ConnectionR{Name: node.Name, RemoteAddress: v})
+		b.Data = append(b.Data, ConnectionW{Name: node.Name, RemoteAddress: v})
 	}
 
 	decoded, err := json.Marshal(b)

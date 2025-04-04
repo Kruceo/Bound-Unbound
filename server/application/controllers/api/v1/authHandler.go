@@ -14,12 +14,12 @@ import (
 )
 
 type LoginR struct {
-	User     string
-	Password string
+	User     string `json:"user"`
+	Password string `json:"password"`
 }
 
 type TokenW struct {
-	Token string
+	Token string `json:"token"`
 }
 
 type BlockedRequester struct {
@@ -128,7 +128,7 @@ func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request)
 }
 
 type RegisterW struct {
-	SecretCode string
+	SecretCode string `json:"secretCode"`
 }
 
 func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -206,8 +206,8 @@ func (a *v1AuthHandlers) AuthHasUserHandler(w http.ResponseWriter, r *http.Reque
 }
 
 type ResetAccountR struct {
-	User       string
-	SecretCode string
+	User       string `json:"user"`
+	SecretCode string `json:"secretCode"`
 }
 
 func (a *v1AuthHandlers) AuthResetAccountHandler(w http.ResponseWriter, r *http.Request) {

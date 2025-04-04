@@ -11,22 +11,30 @@ import (
 	usecases "server2/application/useCases"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
-type RedirectBody struct {
-	From       string
-	RecordType string
-	To         string
-	LocalZone  bool
+type RedirectW struct {
+	From       string `json:"from"`
+	RecordType string `json:"recordType"`
+	To         string `json:"to"`
+	LocalZone  bool   `json:"localZone"`
+}
+
+type RedirectR struct {
+	From       string `json:"from"`
+	RecordType string `json:"recordType"`
+	To         string `json:"to"`
+	LocalZone  bool   `json:"localZone"`
 }
 
 func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
-
+	vars := mux.Vars(r)
+	connectionName := vars["connection"]
 	if r.Method == "GET" {
-
-		connectionName := r.PathValue("connection")
+		fmt.Println(connectionName)
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
@@ -52,7 +60,7 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 			return
 		}
 
-		var b presentation.Response[[]RedirectBody] = presentation.Response[[]RedirectBody]{Data: make([]RedirectBody, 0)}
+		var b presentation.Response[[]RedirectW] = presentation.Response[[]RedirectW]{Data: make([]RedirectW, 0)}
 
 		rawRedirects, err := bh.responseRepo.ReadResponse(id)
 		if err != nil {
@@ -69,7 +77,7 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 			rtype := vsplt[1]
 			to := vsplt[2]
 			localZone := vsplt[3] == "true"
-			b.Data = append(b.Data, RedirectBody{From: from, RecordType: rtype, To: to, LocalZone: localZone})
+			b.Data = append(b.Data, RedirectW{From: from, RecordType: rtype, To: to, LocalZone: localZone})
 		}
 
 		decoded, err := json.Marshal(b)
@@ -81,7 +89,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(decoded)
 		return
 	} else if r.Method == "POST" {
-		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
@@ -95,7 +102,7 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 			return
 		}
 
-		var b RedirectBody
+		var b RedirectR
 		err = json.Unmarshal(body, &b)
 
 		if err != nil {
@@ -130,7 +137,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-		connectionName := r.PathValue("connection")
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
