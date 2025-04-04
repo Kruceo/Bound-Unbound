@@ -25,3 +25,8 @@ type UserRepository interface {
 	FindOneByName(regex string) (*entities.User, error)
 	FindOneByRole(role uint8) (*entities.User, error)
 }
+
+type RequestBlocker interface {
+	IsBlocked(ip string) bool
+	MarkAttempt(ip string)
+}
