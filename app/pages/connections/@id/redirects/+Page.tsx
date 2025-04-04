@@ -34,15 +34,15 @@ export default function Page() {
 
       {/* {data.blockedNames.length} */}
       <Table
-        select={{ selected, setSelected, uniqueKey: "From" }}
+        select={{ selected, setSelected, uniqueKey: "from" }}
         data={data.redirects.map(e => ({
           ...e,
-          buttons: () => <a target="_blank" href={`http://${e.From}`} className="table-button"><Ico>language</Ico></a>
+          buttons: () => <a target="_blank" href={`http://${e.from}`} className="table-button"><Ico>language</Ico></a>
         }))}
         headers={[
-          { acessor: "From", name: "From", width: 3 },
-          { acessor: "RecordType", name: "Type", width: 3 },
-          { acessor: "To", name: "To", width: 3 },
+          { acessor: "from", name: "From", width: 3 },
+          { acessor: "recordType", name: "Type", width: 3 },
+          { acessor: "to", name: "To", width: 3 },
           { acessor: 'buttons', name: "" }]}>
       </Table>
     </main>

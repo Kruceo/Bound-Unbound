@@ -13,3 +13,11 @@ export function apiUrl(pathRoute: string) {
 }
 
 export let apiAxios = axios.create({ headers: { Authorization: "no bearer" } })
+
+export interface ApiResponse<T>{
+    data?:T
+    error?:boolean
+    errorCode?:string
+    message:string
+
+}

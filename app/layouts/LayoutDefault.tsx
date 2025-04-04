@@ -1,19 +1,21 @@
 import "./Layout.less";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SideBar from "./SideBar";
 import { onAuthStatus, onAuthToken } from "./LayoutDefault.telefunc";
 import { navigate } from "vike/client/router";
 
 export default function LayoutDefault({ children }: { children: React.ReactNode }) {
   const [logged, setLogged] = useState<boolean>(false)
-
+  const singleExecuted = useRef(false)
   useEffect(() => {
-    onAuthStatus().then(f => {
-      if (!f.Data.AlreadyRegistered) {
-        navigate("/auth/register")
-        return
-      }
+
+    // this is because in dev mode react mounts 2 times all components
+    // but this 'onAuthStatus' method have a brute force protection
+    if (singleExecuted.current) return console.log("skipped");
+    singleExecuted.current = true
+
+    // onAuthStatus().then(f => {
       onAuthToken().then(d => {
         if (!d.ok) navigate("/auth/signin")
         else setLogged(true)
@@ -23,7 +25,7 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
           }
         }
       }).catch(() => navigate("/auth/signin"))
-    })
+    // })
 
   }, [])
 
