@@ -24,7 +24,7 @@ type HostController struct {
 	responseRepo         infrastructure.ResponsesReporisory
 	saveNode             usecases.SaveNodeUseCase
 	deleteNode           usecases.DeleteNodeUseCase
-	getOrCreate          usecases.GetOrCreateUseCase
+	getOrCreateNode      usecases.GetOrCreateUseCase
 	getNode              usecases.GetNodeUseCase
 	publicKey            ecdh.PublicKey
 	mainCipher           *cipher.AEAD
@@ -55,7 +55,7 @@ func NewHostController(nodeRepo infrastructure.NodeRepository, responseRepo infr
 		nodeRepo:             nodeRepo,
 		responseRepo:         responseRepo,
 		getNode:              getNode,
-		getOrCreate:          getOrCreateNode,
+		getOrCreateNode:      getOrCreateNode,
 		publicKey:            publicKey,
 		mainCipher:           nil,
 		cipherCommandMessage: usecases.NewCipherMessageUseCase(),
@@ -146,10 +146,14 @@ func (wsc *HostController) OnMessageHandler(w http.ResponseWriter, r *http.Reque
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println("Read error:", err)
+			err = wsc.deleteNode.Execute(conn.RemoteAddr().String())
+			if err != nil {
+				fmt.Println(err)
+			}
 			break
 		}
 		nodeID := conn.RemoteAddr().String()
-		node, err := wsc.getOrCreate.Execute(nodeID, conn)
+		node, err := wsc.getOrCreateNode.Execute(nodeID, conn)
 		if err != nil {
 			fmt.Println("Node error:", err)
 			break
