@@ -34,7 +34,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
 	if r.Method == "GET" {
-		fmt.Println(connectionName)
 		client := getNode.Execute(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)

@@ -22,8 +22,6 @@ func NewJWTMiddleware(sessionSecret string) *JWTMiddleware {
 // verify if authorization is a valid jwt, and if jwt address is compatible with requester ip
 func (j *JWTMiddleware) test(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 
-	w.Header().Set("Content-Type", "application/json")
-
 	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	token, err := j.jwtManager.ValidateJWT(string(authorization))
 

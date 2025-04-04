@@ -80,11 +80,19 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 
 func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request) {
 	_, err := a.jwtManager.JWTMiddleware(r)
+
 	if err != nil {
 		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
+
+	// user, err := a.userRepo.FindOneByName(".*")
+
+	// if err != nil || user == nil {
+	// 	a.fastErrorResponses.Execute(w, r, "NO_USERS", http.StatusUnauthorized)
+	// 	return
+	// }
 
 	w.Header().Add("Content-Type", "application/json")
 
@@ -139,34 +147,6 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Write(encodedRes)
-}
-
-type HasUserW struct {
-	AlreadyRegistered bool `json:"alreadyRegistered"`
-}
-
-func (a *v1AuthHandlers) AuthHasUserHandler(w http.ResponseWriter, r *http.Request) {
-
-	var response presentation.Response[HasUserW] = presentation.Response[HasUserW]{Message: "", Data: HasUserW{AlreadyRegistered: false}}
-
-	user, err := a.userRepo.FindOneByName(".*")
-
-	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "JSON_ENCODE", http.StatusInternalServerError)
-		return
-	}
-
-	if user != nil {
-		response.Data.AlreadyRegistered = true
-	}
-
-	responseEncoded, err := json.Marshal(response)
-	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "JSON_ENCODE", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(responseEncoded)
 }
 
 type ResetAccountR struct {

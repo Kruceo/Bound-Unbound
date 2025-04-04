@@ -90,8 +90,7 @@ func (wsc *HostController) ExecuteStringAsCommand(cmdStr string, conn *websocket
 	}
 
 	// fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
-	fmt.Println(command.Entry)
-	fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++=")
+
 	if command.Entry == "connect" && len(command.Args) >= 2 {
 		fmt.Println("receiving connection")
 		name := strings.Join(command.Args[1:], " ")

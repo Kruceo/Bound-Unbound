@@ -32,10 +32,13 @@ func (b *InMemoryRequestBlocker) IsBlocked(ip string) bool {
 	if !exists {
 		return false
 	}
-	result := time.Now().Before(req.LimitTime)
+	now := time.Now()
+	result := now.Before(req.LimitTime)
 	if result {
-		b.storage[ip].LimitTime = b.storage[ip].LimitTime.Add(3 * time.Second)
-		return true
+		if now.UnixMilli()-b.storage[ip].LimitTime.UnixMilli() > 20 {
+			b.storage[ip].LimitTime = b.storage[ip].LimitTime.Add(3 * time.Second)
+			return true
+		}
 	}
 	return false
 }

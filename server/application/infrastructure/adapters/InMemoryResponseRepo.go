@@ -38,9 +38,8 @@ func (r *InMemoryResponseRepository) WaitForResponse(id string) error {
 	}()
 
 	for v := range ch {
-		fmt.Println(v, id)
+		// fmt.Println(v, id)
 		if v == id {
-			fmt.Println("returned")
 			return nil
 		}
 		if v == "_TIMEOUT_"+id {
