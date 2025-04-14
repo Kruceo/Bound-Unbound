@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"server2/application/infrastructure"
 	"strings"
 	"time"
 
@@ -165,4 +166,20 @@ func (j *JwtUseCase) JWTMiddleware(r *http.Request) (*jwt.Token, error) {
 	}
 
 	return token, nil
+}
+
+type UserUseCase struct {
+	repo infrastructure.UserRepository
+}
+
+func (u *UserUseCase) Save(username string, password string, roleID string, secret string) (string, error) {
+	fmt.Println("saving", username)
+	id, err := u.repo.Save(username, password, roleID, secret)
+	return id, err
+}
+
+func (u *UserUseCase) Update(id, username string, password string, roleID string, secret string) error {
+	fmt.Println("updating", id)
+	err := u.repo.Update(id, username, password, roleID, secret)
+	return err
 }
