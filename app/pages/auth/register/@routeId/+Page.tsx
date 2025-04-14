@@ -1,14 +1,16 @@
-import Input from "../../../components/Input";
+import Input from "../../../../components/Input";
 import { onRegisterAction } from "./Page.telefunc";
 import "./Page.less";
 import { navigate } from "vike/client/router";
 import { useState } from "react";
+import { useData } from "vike-react/useData";
+import { Data } from "./+data";
 export default function Page() {
 
   const [problem, setProblem] = useState<string | undefined>()
   const [secretCode, setSecretCode] = useState<string | undefined>()
-  const [userConfirmed, setUserConfirmed] = useState(false)
-  async function loginHandler(e: React.FormEvent<HTMLFormElement>) {
+  const data = useData() as Data
+  async function registerHandler(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitEnabled(false);
     setTimeout(() => {
@@ -29,7 +31,7 @@ export default function Page() {
       return
     }
 
-    const re = await onRegisterAction(user.toString(), password.toString())
+    const re = await onRegisterAction(user.toString(), password.toString(),data.routeId)
 
     if (!re || re.error) {
       switch (re.errorCode) {
@@ -62,7 +64,7 @@ export default function Page() {
 
       <main className="login-frame">
         {!secretCode ?
-          <form onSubmit={loginHandler}>
+          <form onSubmit={registerHandler}>
             <h2>Create Account</h2>
             <p>Security is the first step in this journey. Please fill the form.</p>
             <div className="inputs">

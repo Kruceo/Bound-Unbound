@@ -1,7 +1,11 @@
 interface APIResponse<T = any> {
-    Error?: false, ErrorCode?: string, Message: string, Data?: T
+    error?: false, errorCode?: string, message: string, data?: T
 }
 
 interface ConfigHashResponse extends APIResponse {
    Data?: { Hash: string }
 }
+
+interface CreateRegisterRequestResponse extends APIResponse {
+    Data?: { routeId: string }
+ }

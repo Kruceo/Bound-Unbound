@@ -1,8 +1,8 @@
-import { apiAxios, ApiResponse, apiUrl } from "../../../api/api"
+import { apiAxios, ApiResponse, apiUrl } from "../../../../api/api"
 
 const encoder = new TextEncoder();
 
-export async function onRegisterAction(username: string, password: string) :Promise<ApiResponse<{ secretCode: string }>>{
+export async function onRegisterAction(username: string, password: string,routeId?:string) :Promise<ApiResponse<{ secretCode: string }>>{
   const url = apiUrl("/auth/register")
   
   const data = encoder.encode(password);
@@ -12,8 +12,9 @@ export async function onRegisterAction(username: string, password: string) :Prom
   
   try {
     const res = await apiAxios.post(url, {
-      User: username,
-      Password: hashedPassword
+      user: username,
+      password: hashedPassword,
+      routeId
     })
 
     return res.data
