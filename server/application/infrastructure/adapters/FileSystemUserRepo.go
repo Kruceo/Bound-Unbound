@@ -172,3 +172,19 @@ func (f *FileSystemUserRepo) FindOneByRole(role uint8) (*entities.User, error) {
 	}
 	return users[0], nil
 }
+
+func (f *FileSystemUserRepo) Count() (int, error) {
+	users, err := f.loadUsers()
+	if err != nil {
+		return 0, err
+	}
+	return len(users), nil
+}
+
+func (f *FileSystemUserRepo) CountByRole(role uint8) (int, error) {
+	return 0, fmt.Errorf("not implemented")
+}
+
+func (f *FileSystemUserRepo) CountByName(name string) (int, error) {
+	return 0, fmt.Errorf("not implemented")
+}

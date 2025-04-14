@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"server2/application/presentation"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type LoginR struct {
@@ -73,8 +76,8 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	fmt.Println("logged")
 	w.Header().Add("Set-Cookie", "session="+jwtToken+"; SameSite=none; Secure")
-
 	w.Write(encoded)
 }
 
@@ -99,21 +102,54 @@ func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte("Ok"))
 }
 
+type RegisterR struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+	RouteId  string `json:"routeId"`
+}
+
 type RegisterW struct {
 	SecretCode string `json:"secretCode"`
 }
 
 func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	userCount, err := a.userRepo.Count()
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ALREADY_REGISTERED", http.StatusInternalServerError)
+		return
+	}
 
 	var body []byte
-	body, err := io.ReadAll(r.Body)
+	body, err = io.ReadAll(r.Body)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 		return
 	}
 
-	var b LoginR
+	var b RegisterR
 	err = json.Unmarshal(body, &b)
+
+	var newUserRole uint8 = 0
+	if userCount != 0 {
+		// change this to use a routeRepe entry
+		// first registered user is a admin
+		// and this admin can create route repo entries to other users register in this
+
+		storedRole, routeExists := a.routesRepo.Exists(b.RouteId)
+		if !routeExists {
+			a.fastErrorResponses.Execute(w, r, "NOT_FOUND", http.StatusNotFound)
+			return
+		}
+		fmt.Println(storedRole)
+		parsedRole, err := strconv.ParseInt(storedRole, 10, 8)
+		if err != nil {
+			// handle the error
+			a.fastErrorResponses.Execute(w, r, "ROLE_PARSE_ERROR", http.StatusInternalServerError)
+			return
+		}
+
+		newUserRole = uint8(parsedRole)
+	}
 
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
@@ -133,7 +169,7 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
 	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
 
-	_, err = a.userRepo.Save(b.User, string(passwordHash), 0, string(hashedSecretCode))
+	_, err = a.userRepo.Save(b.User, string(passwordHash), newUserRole, string(hashedSecretCode))
 
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "REPO", http.StatusInternalServerError)
@@ -147,6 +183,75 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Write(encodedRes)
+}
+
+type CreateRegisterR struct {
+	Role uint `json:"role"`
+}
+
+type CreateRegisterW struct {
+	RouteId string `json:"routeId"`
+}
+
+func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *http.Request) {
+	token, err := a.jwtManager.JWTMiddleware(r)
+	if err != nil {
+		fmt.Println(err)
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	jwtSubject, ok := token.Claims.(jwt.MapClaims)["sub"].(string)
+
+	if !ok || jwtSubject == "" {
+		a.fastErrorResponses.Execute(w, r, "JWT_SUBJECT_ERROR", http.StatusInternalServerError)
+		return
+	}
+
+	userid, _ := a.jwtManager.ParseJWTSubject(jwtSubject)
+
+	requesterUser, err := a.userRepo.Get(userid)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "USER_NOT_FOUND", http.StatusNotFound)
+		return
+	}
+
+	if !requesterUser.IsAdmin() {
+		a.fastErrorResponses.Execute(w, r, "NOT_ADMIN", http.StatusUnauthorized)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
+		return
+	}
+
+	var b CreateRegisterR
+	err = json.Unmarshal(body, &b)
+
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
+		return
+	}
+
+	routeID, err := a.routesRepo.Gen(fmt.Sprintf("%d", b.Role))
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROUTE_GEN", http.StatusInternalServerError)
+		return
+	}
+
+	var response presentation.Response[CreateRegisterW] = presentation.Response[CreateRegisterW]{Data: CreateRegisterW{RouteId: routeID}}
+
+	responseEncoded, err := json.Marshal(response)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.Write(responseEncoded)
 }
 
 type ResetAccountR struct {

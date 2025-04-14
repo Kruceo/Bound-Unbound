@@ -95,10 +95,10 @@ func NewJWTUseCase(sessionSecret string) *JwtUseCase {
 	return &JwtUseCase{sessionSecret: sessionSecret}
 }
 
-// generate a JWT token with username and string as subject ('sub' claim)
-func (j *JwtUseCase) GenerateJWT(username string, address string) (string, error) {
+// generate a JWT token with userid and string as subject ('sub' claim)
+func (j *JwtUseCase) GenerateJWT(userId string, address string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": fmt.Sprintf("%s$%s", username, address),
+		"sub": fmt.Sprintf("%s$%s", userId, address),
 		"exp": time.Now().Add(time.Second * 3600).Unix(),
 		"iat": time.Now().Unix(),
 	}
@@ -113,7 +113,7 @@ func (j *JwtUseCase) GenerateJWT(username string, address string) (string, error
 	return tokenString, nil
 }
 
-// returns username and address without port (string,string)
+// returns userid and address without port (string,string)
 func (j *JwtUseCase) ParseJWTSubject(subject string) (string, string) {
 	splited := strings.Split(subject, "$")
 	return splited[0], strings.Split(splited[1], ":")[0]

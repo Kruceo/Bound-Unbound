@@ -47,10 +47,20 @@ func (j *JWTMiddleware) test(w http.ResponseWriter, r *http.Request) (*jwt.Token
 
 func (j *JWTMiddleware) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := j.test(w, r); err != nil {
+		tokens, err := j.test(w, r)
+		if err != nil {
 			j.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 			return
 		}
+		subject, err := tokens.Claims.GetSubject()
+		if err != nil {
+			j.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+			return
+		}
+
+		userid, originalAddress := j.jwtManager.ParseJWTSubject(subject)
+		r.Header.Set("user-id", userid)
+		r.Header.Set("user-original-address", originalAddress)
 		next.ServeHTTP(w, r)
 	})
 }

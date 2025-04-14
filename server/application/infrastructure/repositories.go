@@ -25,6 +25,9 @@ type UserRepository interface {
 	SearchByRole(role uint8) ([]*entities.User, error)
 	FindOneByName(regex string) (*entities.User, error)
 	FindOneByRole(role uint8) (*entities.User, error)
+	Count() (int, error)
+	CountByRole(role uint8) (int, error)
+	CountByName(regex string) (int, error)
 }
 
 type RoutesRepository interface {
