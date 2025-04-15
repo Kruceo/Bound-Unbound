@@ -110,14 +110,23 @@ func (a *v1AuthHandlers) AuthDeleteRole(w http.ResponseWriter, r *http.Request) 
 		a.fastErrorResponses.Execute(w, r, "NOT_ADMIN", http.StatusUnauthorized)
 		return
 	}
+	var payload struct {
+		ID string `json:"id"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&payload)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
-	roleID := r.URL.Query().Get("id")
-	if roleID == "" {
+	if payload.ID == "" {
 		a.fastErrorResponses.Execute(w, r, "MISSING_ID", http.StatusBadRequest)
 		return
 	}
 
-	err = a.roleUseCase.Delete(roleID)
+	err = a.roleUseCase.Delete(payload.ID)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "ROLE_DELETION", http.StatusInternalServerError)
 		return
