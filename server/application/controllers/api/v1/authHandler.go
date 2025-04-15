@@ -7,12 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"server2/application/presentation"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type LoginR struct {
@@ -26,12 +23,10 @@ type TokenW struct {
 
 func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Add("Content-Type", "application/json")
 	var body []byte
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
-
 		return
 	}
 
@@ -52,11 +47,9 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 
 	storedUser, err := a.userRepo.FindOneByName(b.User)
 	if err != nil {
-		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
-
 	if !a.hashPassword.VerifyPassword(b.Password, storedUser.Password) {
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
@@ -76,13 +69,13 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	fmt.Println("logged")
+	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", "session="+jwtToken+"; SameSite=none; Secure")
 	w.Write(encoded)
 }
 
 func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request) {
-	_, err := a.jwtManager.JWTMiddleware(r)
+	_, err := a.jwtManager.TokenFromBearer(r.Header.Get("Authorization"))
 
 	if err != nil {
 		fmt.Println(err)
@@ -129,26 +122,29 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 	var b RegisterR
 	err = json.Unmarshal(body, &b)
 
-	var newUserRole uint8 = 0
+	var newUserRoleID string = "0"
 	if userCount != 0 {
 		// change this to use a routeRepe entry
 		// first registered user is a admin
 		// and this admin can create route repo entries to other users register in this
 
-		storedRole, routeExists := a.routesRepo.Exists(b.RouteId)
+		storedRoleID, routeExists := a.routesRepo.Exists(b.RouteId)
 		if !routeExists {
 			a.fastErrorResponses.Execute(w, r, "NOT_FOUND", http.StatusNotFound)
 			return
 		}
-		fmt.Println(storedRole)
-		parsedRole, err := strconv.ParseInt(storedRole, 10, 8)
 		if err != nil {
 			// handle the error
 			a.fastErrorResponses.Execute(w, r, "ROLE_PARSE_ERROR", http.StatusInternalServerError)
 			return
 		}
 
-		newUserRole = uint8(parsedRole)
+		newUserRoleID = storedRoleID
+	}
+
+	if _, err = a.roleUseCase.Get(newUserRoleID); err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROLE_NOT_FOUND", http.StatusBadRequest)
+		return
 	}
 
 	if err != nil {
@@ -169,7 +165,7 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
 	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
 
-	_, err = a.userRepo.Save(b.User, string(passwordHash), newUserRole, string(hashedSecretCode))
+	_, err = a.userRepo.Save(b.User, string(passwordHash), newUserRoleID, string(hashedSecretCode))
 
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "REPO", http.StatusInternalServerError)
@@ -194,25 +190,9 @@ type CreateRegisterW struct {
 }
 
 func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *http.Request) {
-	token, err := a.jwtManager.JWTMiddleware(r)
+	requesterUser, err := a.getUserFromJWTBearerUseCase.Execute(r.Header.Get("Authorization"))
 	if err != nil {
-		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
-		return
-	}
-
-	jwtSubject, ok := token.Claims.(jwt.MapClaims)["sub"].(string)
-
-	if !ok || jwtSubject == "" {
-		a.fastErrorResponses.Execute(w, r, "JWT_SUBJECT_ERROR", http.StatusInternalServerError)
-		return
-	}
-
-	userid, _ := a.jwtManager.ParseJWTSubject(jwtSubject)
-
-	requesterUser, err := a.userRepo.Get(userid)
-	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "USER_NOT_FOUND", http.StatusNotFound)
 		return
 	}
 
@@ -355,7 +335,7 @@ func (a *v1AuthHandlers) AuthResetAccountPasswordHandler(w http.ResponseWriter, 
 	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
 	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
 
-	err = a.userRepo.Update(userId, user.Username, string(passwordHash), user.Role, string(hashedSecretCode))
+	err = a.userRepo.Update(userId, user.Username, string(passwordHash), user.RoleID, string(hashedSecretCode))
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "UPDATE_USER", http.StatusInternalServerError)
 		return

@@ -14,15 +14,26 @@ func NewRoleUseCase(repo infrastructure.RoleRepository) *RoleUseCase {
 		repo: repo,
 	}
 }
-func (u *RoleUseCase) Create(role *entities.Role) (string, error) {
-	return u.repo.Create(role)
+
+// return createdId,err
+func (u *RoleUseCase) Save(name string, permissions []string) (string, error) {
+	id, err := u.repo.NextID()
+	if err != nil {
+		return "", err
+	}
+
+	r, err := entities.NewRole(id, name, permissions...)
+	if err != nil {
+		return "", err
+	}
+	return u.repo.Create(r)
 }
 
 func (u *RoleUseCase) Get(id string) (*entities.Role, error) {
 	return u.repo.Get(id)
 }
 
-func (u *RoleUseCase) Delete(id string) (*entities.Role, error) {
+func (u *RoleUseCase) Delete(id string) error {
 	return u.repo.Delete(id)
 }
 

@@ -8,19 +8,26 @@ import (
 )
 
 type v1AuthHandlers struct {
-	userRepo           infrastructure.UserRepository
-	routesRepo         infrastructure.RoutesRepository
-	hashPassword       usecases.PassowrdHashUseCase
-	jwtManager         *usecases.JwtUseCase
-	fastErrorResponses presentation.FastErrorResponses
+	roleUseCase                 *usecases.RoleUseCase
+	userUseCase                 *usecases.UserUseCase
+	getUserFromJWTBearerUseCase *usecases.GetUserFromJWTBearerUseCase
+	userRepo                    infrastructure.UserRepository
+	routesRepo                  infrastructure.RoutesRepository
+	hashPassword                usecases.PassowrdHashUseCase
+	jwtManager                  *usecases.JwtUseCase
+	fastErrorResponses          presentation.FastErrorResponses
 }
 
-func NewV1AuthHandlers(userRepo infrastructure.UserRepository, sessionSecret string) *v1AuthHandlers {
+func NewV1AuthHandlers(userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, sessionSecret string) *v1AuthHandlers {
+	jwtUseCase := usecases.NewJWTUseCase(sessionSecret)
 	return &v1AuthHandlers{
-		userRepo:           userRepo,
-		jwtManager:         usecases.NewJWTUseCase(sessionSecret),
-		hashPassword:       usecases.NewPassowrdHashUseCase(),
-		fastErrorResponses: presentation.NewFastErrorResponses(),
-		routesRepo:         adapters.NewInMemoryRoutesRepository(),
+		roleUseCase:                 usecases.NewRoleUseCase(roleRepo),
+		userUseCase:                 usecases.NewUserUseCase(userRepo),
+		getUserFromJWTBearerUseCase: usecases.NewGetUserFromJWTBearerUseCase(userRepo, jwtUseCase),
+		userRepo:                    userRepo,
+		jwtManager:                  jwtUseCase,
+		hashPassword:                usecases.NewPassowrdHashUseCase(),
+		fastErrorResponses:          presentation.NewFastErrorResponses(),
+		routesRepo:                  adapters.NewInMemoryRoutesRepository(),
 	}
 }
