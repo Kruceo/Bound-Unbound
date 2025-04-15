@@ -43,9 +43,11 @@ type RequestBlocker interface {
 type RoleRepository interface {
 	Create(*entities.Role) (string, error)
 	Get(id string) (*entities.Role, error)
-	Delete(id string) (*entities.Role, error)
+	Delete(id string) error
 	Update(*entities.Role) error
 	GetAll(limit int) ([]*entities.Role, error)
 	SearchByName(name string, limit int) ([]*entities.Role, error)
+	CreateIfNotExists(*entities.Role) (bool, error)
+	NextID() (string, error)
 	Count() (int, error)
 }

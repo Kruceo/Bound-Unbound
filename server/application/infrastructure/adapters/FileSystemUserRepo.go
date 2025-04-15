@@ -22,7 +22,6 @@ func NewFileSystemUserRepo(filePath string) *FileSystemUserRepo {
 func (f *FileSystemUserRepo) loadUsers() (map[string]*entities.User, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-
 	file, err := os.Open(f.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -36,6 +35,7 @@ func (f *FileSystemUserRepo) loadUsers() (map[string]*entities.User, error) {
 	if err := json.NewDecoder(file).Decode(&users); err != nil {
 		return nil, err
 	}
+
 	return users, nil
 }
 
@@ -64,7 +64,7 @@ func (f *FileSystemUserRepo) Save(name, password string, roleID string, recovery
 		return "", fmt.Errorf("user id already exists: %s", id)
 	}
 
-	user, err := entities.NewUser(id, name, password, fmt.Sprintf("%d", roleID), recoveryCode)
+	user, err := entities.NewUser(id, name, password, roleID, recoveryCode)
 	if err != nil {
 		return "", err
 	}
@@ -134,7 +134,6 @@ func (f *FileSystemUserRepo) SearchByName(regex string) ([]*entities.User, error
 	var result []*entities.User
 	r := regexp.MustCompile(regex)
 	for _, user := range users {
-		// fmt.Println(user.Username, r, r.MatchString(user.Username))
 		if r.MatchString(user.Username) {
 			result = append(result, user)
 		}
@@ -150,7 +149,7 @@ func (f *FileSystemUserRepo) SearchByRoleName(role string) ([]*entities.User, er
 
 	var result []*entities.User
 	for _, user := range users {
-		if user.RoleID == fmt.Sprintf("%d", role) {
+		if user.RoleID == fmt.Sprintf("%s", role) {
 			result = append(result, user)
 		}
 	}

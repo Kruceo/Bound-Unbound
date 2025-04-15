@@ -3,10 +3,11 @@ package adapters
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"server2/application/entities"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type FileRoleRepository struct {
@@ -20,10 +21,26 @@ func NewFileRoleRepository(path string) *FileRoleRepository {
 		filePath: path,
 		roles:    make(map[string]*entities.Role),
 	}
+
+	_, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	err = repo.load()
+	if err != nil {
+		panic(err)
+	}
+
 	admin, err := entities.NewRole("0", "Admin", "read&write")
-	fmt.Println(err)
-	repo.Create(admin)
-	// repo.save()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = repo.CreateIfNotExists(admin)
+	if err != nil {
+		panic(err)
+	}
 	return repo
 }
 
@@ -66,17 +83,17 @@ func (r *FileRoleRepository) Get(id string) (*entities.Role, error) {
 	return role, nil
 }
 
-func (r *FileRoleRepository) Delete(id string) (*entities.Role, error) {
+func (r *FileRoleRepository) Delete(id string) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	role, ok := r.roles[id]
+	_, ok := r.roles[id]
 	if !ok {
-		return nil, errors.New("role not found")
+		return errors.New("role not found")
 	}
 
 	delete(r.roles, id)
-	return role, r.save()
+	return r.save()
 }
 
 func (r *FileRoleRepository) Update(role *entities.Role) error {
@@ -121,6 +138,22 @@ func (r *FileRoleRepository) SearchByName(name string, limit int) ([]*entities.R
 		}
 	}
 	return result, nil
+}
+
+func (r *FileRoleRepository) NextID() (string, error) {
+	id := uuid.New()
+	return id.String(), nil
+}
+
+func (r *FileRoleRepository) CreateIfNotExists(role *entities.Role) (bool, error) {
+	if _, exists := r.roles[role.ID]; exists {
+		return false, nil
+	}
+	_, err := r.Create(role)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *FileRoleRepository) Count() (int, error) {
