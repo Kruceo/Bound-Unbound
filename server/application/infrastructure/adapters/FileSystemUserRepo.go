@@ -141,7 +141,7 @@ func (f *FileSystemUserRepo) SearchByName(regex string) ([]*entities.User, error
 	return result, nil
 }
 
-func (f *FileSystemUserRepo) SearchByRoleName(role string) ([]*entities.User, error) {
+func (f *FileSystemUserRepo) SearchByRoleID(role string) ([]*entities.User, error) {
 	users, err := f.loadUsers()
 	if err != nil {
 		return nil, err
@@ -164,8 +164,8 @@ func (f *FileSystemUserRepo) FindOneByName(regex string) (*entities.User, error)
 	return users[0], nil
 }
 
-func (f *FileSystemUserRepo) FindOneByRoleName(role string) (*entities.User, error) {
-	users, err := f.SearchByRoleName(role)
+func (f *FileSystemUserRepo) FindOneByRoleID(role string) (*entities.User, error) {
+	users, err := f.SearchByRoleID(role)
 	if err != nil || len(users) == 0 {
 		return nil, errors.New("user not found")
 	}
@@ -180,7 +180,7 @@ func (f *FileSystemUserRepo) Count() (int, error) {
 	return len(users), nil
 }
 
-func (f *FileSystemUserRepo) CountByRoleName(role string) (int, error) {
+func (f *FileSystemUserRepo) CountByRoleID(role string) (int, error) {
 	return 0, fmt.Errorf("not implemented")
 }
 

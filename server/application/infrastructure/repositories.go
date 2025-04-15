@@ -22,11 +22,11 @@ type UserRepository interface {
 	Get(id string) (*entities.User, error)
 	Delete(id string) error
 	SearchByName(regex string) ([]*entities.User, error)
-	SearchByRoleName(role string) ([]*entities.User, error)
+	SearchByRoleID(role string) ([]*entities.User, error)
 	FindOneByName(regex string) (*entities.User, error)
-	FindOneByRoleName(role string) (*entities.User, error)
+	FindOneByRoleID(role string) (*entities.User, error)
 	Count() (int, error)
-	CountByRoleName(role string) (int, error)
+	CountByRoleID(role string) (int, error)
 	CountByName(regex string) (int, error)
 }
 

@@ -221,3 +221,9 @@ func (u *UserUseCase) Get(id string) (*entities.User, error) {
 	user, err := u.repo.Get(id)
 	return user, err
 }
+
+func (u *UserUseCase) SearchByRoleID(roleName string) ([]*entities.User, error) {
+	fmt.Println("searching by role", roleName)
+	user, err := u.repo.SearchByRoleID(roleName)
+	return user, err
+}

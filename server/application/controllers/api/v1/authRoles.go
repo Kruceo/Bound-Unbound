@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"server2/application/presentation"
 )
@@ -67,7 +68,7 @@ func (a *v1AuthHandlers) AuthPostRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload PostRoleR
+	var payload []PostRoleR
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&payload)
 	if err != nil {
@@ -76,18 +77,16 @@ func (a *v1AuthHandlers) AuthPostRole(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	createdID, err := a.roleUseCase.Save(payload.Name, payload.Permissions)
+	var response presentation.Response[[]PostRoleW]
 
-	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "ROLE_CREATION", http.StatusBadRequest)
-		return
-	}
+	for _, v := range payload {
+		createdID, err := a.roleUseCase.Save(v.Name, v.Permissions)
+		if err != nil {
+			a.fastErrorResponses.Execute(w, r, "ROLE_CREATION", http.StatusBadRequest)
+			return
+		}
 
-	var response presentation.Response[PostRoleW]
-	response.Data = PostRoleW{
-		ID:          createdID,
-		Name:        payload.Name,
-		Permissions: payload.Permissions,
+		response.Data = append(response.Data, PostRoleW{ID: createdID, Name: v.Name, Permissions: v.Permissions})
 	}
 
 	encoded, err := json.Marshal(response)
@@ -99,6 +98,11 @@ func (a *v1AuthHandlers) AuthPostRole(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.Write(encoded)
 }
+
+type DeleteRoleW struct {
+	ID string `json:"id"`
+}
+
 func (a *v1AuthHandlers) AuthDeleteRole(w http.ResponseWriter, r *http.Request) {
 	requesterUser, err := a.getUserFromJWTBearerUseCase.Execute(r.Header.Get("Authorization"))
 	if err != nil {
@@ -110,9 +114,7 @@ func (a *v1AuthHandlers) AuthDeleteRole(w http.ResponseWriter, r *http.Request) 
 		a.fastErrorResponses.Execute(w, r, "NOT_ADMIN", http.StatusUnauthorized)
 		return
 	}
-	var payload struct {
-		ID string `json:"id"`
-	}
+	var payload []DeleteRoleW
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&payload)
 	if err != nil {
@@ -121,15 +123,31 @@ func (a *v1AuthHandlers) AuthDeleteRole(w http.ResponseWriter, r *http.Request) 
 	}
 	defer r.Body.Close()
 
-	if payload.ID == "" {
-		a.fastErrorResponses.Execute(w, r, "MISSING_ID", http.StatusBadRequest)
-		return
-	}
+	fmt.Println("missing 'validation over existent users using role'")
 
-	err = a.roleUseCase.Delete(payload.ID)
-	if err != nil {
-		a.fastErrorResponses.Execute(w, r, "ROLE_DELETION", http.StatusInternalServerError)
-		return
+	for _, v := range payload {
+		if v.ID == "" {
+			a.fastErrorResponses.Execute(w, r, "MISSING_ID", http.StatusBadRequest)
+			return
+		}
+
+		usersWithThisRole, err := a.userUseCase.SearchByRoleID(v.ID)
+		if err != nil {
+			a.fastErrorResponses.Execute(w, r, "GET_ROLE_USERS", http.StatusInternalServerError)
+			return
+		}
+
+		if len(usersWithThisRole) > 0 {
+			a.fastErrorResponses.Execute(w, r, "USER_USING_ROLE", http.StatusInternalServerError)
+			return
+		}
+
+		err = a.roleUseCase.Delete(v.ID)
+		if err != nil {
+			a.fastErrorResponses.Execute(w, r, "ROLE_DELETION", http.StatusInternalServerError)
+			return
+		}
+
 	}
 
 	var response presentation.Response[bool]
