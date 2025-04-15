@@ -21,12 +21,14 @@ func Run() {
 	nodeRepo := adapters.NewInMemoryNodeRepository()
 	responseRepo := adapters.NewInMemoryResponseRepository()
 	userRepo := adapters.NewFileSystemUserRepo("users.temp.json")
+	roleRepo := adapters.NewFileRoleRepository("roles.temp.json")
 	authMiddleware := middlewares.NewJWTMiddleware(enviroment.SESSION_SECRET).AuthMiddleware
 	corsMiddleware := middlewares.NewCorsMiddleware(enviroment.CORS_ORIGIN, "Authorization", "Content-Type", "Cookie").CorsMiddleware
 	bforceMiddleware := middlewares.NewBruteForceMiddleware().BruteForceMiddleware
+
 	r := mux.NewRouter()
 	apiRouter := routers.SetupNodesRouter(r, &nodeRepo, &responseRepo)
-	authRouter := routers.SetupAuthRouter(r, userRepo, enviroment.SESSION_SECRET)
+	authRouter := routers.SetupAuthRouter(r, userRepo, roleRepo, enviroment.SESSION_SECRET)
 	routers.SetupWebsocketRouter(r, &nodeRepo, &responseRepo, priv, pub)
 
 	apiRouter.Use(corsMiddleware, authMiddleware)
