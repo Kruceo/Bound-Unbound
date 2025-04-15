@@ -182,11 +182,11 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 }
 
 type CreateRegisterR struct {
-	Role uint `json:"role"`
+	RoleID string `json:"roleId"`
 }
 
 type CreateRegisterW struct {
-	RouteId string `json:"routeId"`
+	RouteID string `json:"routeId"`
 }
 
 func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *http.Request) {
@@ -216,13 +216,13 @@ func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	routeID, err := a.routesRepo.Gen(fmt.Sprintf("%d", b.Role))
+	routeID, err := a.routesRepo.Gen(fmt.Sprintf("%d", b.RoleID))
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "ROUTE_GEN", http.StatusInternalServerError)
 		return
 	}
 
-	var response presentation.Response[CreateRegisterW] = presentation.Response[CreateRegisterW]{Data: CreateRegisterW{RouteId: routeID}}
+	var response presentation.Response[CreateRegisterW] = presentation.Response[CreateRegisterW]{Data: CreateRegisterW{RouteID: routeID}}
 
 	responseEncoded, err := json.Marshal(response)
 	if err != nil {
