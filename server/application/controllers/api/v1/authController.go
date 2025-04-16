@@ -18,8 +18,7 @@ type v1AuthHandlers struct {
 	fastErrorResponses          presentation.FastErrorResponses
 }
 
-func NewV1AuthHandlers(userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, sessionSecret string) *v1AuthHandlers {
-	jwtUseCase := usecases.NewJWTUseCase(sessionSecret)
+func NewV1AuthHandlers(userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, jwtUseCase *usecases.JwtUseCase) *v1AuthHandlers {
 	return &v1AuthHandlers{
 		roleUseCase:                 usecases.NewRoleUseCase(roleRepo),
 		userUseCase:                 usecases.NewUserUseCase(userRepo),
