@@ -1,0 +1,68 @@
+@import "../../layouts/style.less";
+
+#users-page {
+
+    h1.page-title {
+        display: flex;
+    }
+
+    div:has(>.page-title) {
+        display: flex;
+        align-items: center;
+        width: 100%;
+
+        .controls {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+
+            button {
+                aspect-ratio: 1;
+
+                color: @text;
+
+                &.delete {
+                    border-color: @bad;
+
+                    * {
+                        color: @bad !important;
+                    }
+                }
+
+                &.reload.changed {
+                    background-color: #f92;
+                }
+
+                &:hover {
+                    // background-color: @hovers;
+                    filter: brightness(1.25);
+                    color: @forms;
+                }
+            }
+        }
+    }
+    form input,select{
+        width: 100%;
+    }
+
+    .actions{
+        display: flex;
+        button{
+            width: fit-content;
+        }
+    }
+    
+    form{
+        h3{
+            margin: 0px;
+            margin-inline: auto;
+        }
+    }
+    .permission:has(input[name=permission]){
+        display: flex;
+        gap: 6px;
+        input{
+            width: 16px;
+        }
+    }
+}
