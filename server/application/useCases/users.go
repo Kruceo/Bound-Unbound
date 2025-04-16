@@ -222,6 +222,12 @@ func (u *UserUseCase) Get(id string) (*entities.User, error) {
 	return user, err
 }
 
+func (u *UserUseCase) SearchByName(regex string) ([]*entities.User, error) {
+	fmt.Println("searching by name", regex)
+	users, err := u.repo.SearchByName(regex)
+	return users, err
+}
+
 func (u *UserUseCase) SearchByRoleID(roleName string) ([]*entities.User, error) {
 	fmt.Println("searching by role", roleName)
 	user, err := u.repo.SearchByRoleID(roleName)
