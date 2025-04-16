@@ -3,26 +3,25 @@ package routers
 import (
 	v1 "server2/application/controllers/api/v1"
 	"server2/application/infrastructure"
+	usecases "server2/application/useCases"
 
 	"github.com/gorilla/mux"
 )
 
-func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, sessionSecret string) *mux.Router {
+func SetupAuthRouter(r *mux.Router, userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, jwtUseCase *usecases.JwtUseCase) *mux.Router {
 
-	authController := v1.NewV1AuthHandlers(userRepo, roleRepo, sessionSecret)
+	authController := v1.NewV1AuthHandlers(userRepo, roleRepo, jwtUseCase)
 
-	router := r.PathPrefix("/auth").Subrouter()
-	router.HandleFunc("/login", authController.AuthLoginHandler).Methods("POST")
-	router.HandleFunc("/token", authController.AuthClientToken).Methods("GET")
-	router.HandleFunc("/register", authController.AuthRegisterHandler).Methods("POST")
-	router.HandleFunc("/register/request", authController.AuthCreateRegisterRequest).Methods("POST")
+	prefix := r.PathPrefix("/auth")
 
-	router.HandleFunc("/roles", authController.AuthGetRoles).Methods("GET")
-	router.HandleFunc("/roles", authController.AuthPostRole).Methods("POST")
-	router.HandleFunc("/roles", authController.AuthDeleteRole).Methods("DELETE")
+	loginRouter := prefix.Subrouter()
 
-	router.HandleFunc("/reset", authController.AuthResetAccountHandler).Methods("POST")
-	router.HandleFunc("/reset/pwd", authController.AuthResetAccountPasswordHandler).Methods("POST")
+	loginRouter.HandleFunc("/login", authController.AuthLoginHandler).Methods("POST")
+	loginRouter.HandleFunc("/token", authController.AuthClientToken).Methods("GET")
+	loginRouter.HandleFunc("/register", authController.AuthRegisterHandler).Methods("POST")
+	loginRouter.HandleFunc("/register/request", authController.AuthCreateRegisterRequest).Methods("POST")
+	loginRouter.HandleFunc("/reset", authController.AuthResetAccountHandler).Methods("POST")
+	loginRouter.HandleFunc("/reset/pwd", authController.AuthResetAccountPasswordHandler).Methods("POST")
 
-	return router
+	return loginRouter
 }
