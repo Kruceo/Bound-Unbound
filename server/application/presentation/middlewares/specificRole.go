@@ -14,9 +14,11 @@ type RoleMiddleware struct {
 }
 
 func NewRoleMiddleware(permissions []string, jwt *usecases.JwtUseCase, userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository) *RoleMiddleware {
+	f := presentation.NewFastErrorResponses()
 	return &RoleMiddleware{
 		permissions:              permissions,
 		getUserFromBearerUseCase: usecases.NewGetUserFromJWTBearerUseCase(userRepo, jwt),
+		fastErrorResponses:       &f,
 	}
 }
 
