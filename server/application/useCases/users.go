@@ -205,31 +205,37 @@ func NewUserUseCase(repo infrastructure.UserRepository) *UserUseCase {
 }
 
 func (u *UserUseCase) Save(username string, password string, roleID string, secret string) (string, error) {
-	fmt.Println("saving", username)
+	fmt.Println("saving user", username)
 	id, err := u.repo.Save(username, password, roleID, secret)
 	return id, err
 }
 
 func (u *UserUseCase) Update(id, username string, password string, roleID string, secret string) error {
-	fmt.Println("updating", id)
+	fmt.Println("updating user", id)
 	err := u.repo.Update(id, username, password, roleID, secret)
 	return err
 }
 
 func (u *UserUseCase) Get(id string) (*entities.User, error) {
-	fmt.Println("getting", id)
+	fmt.Println("getting user", id)
 	user, err := u.repo.Get(id)
 	return user, err
 }
 
+func (u *UserUseCase) Delete(id string) error {
+	fmt.Println("deleting user", id)
+	err := u.repo.Delete(id)
+	return err
+}
+
 func (u *UserUseCase) SearchByName(regex string) ([]*entities.User, error) {
-	fmt.Println("searching by name", regex)
+	fmt.Println("searching user by name", regex)
 	users, err := u.repo.SearchByName(regex)
 	return users, err
 }
 
 func (u *UserUseCase) SearchByRoleID(roleName string) ([]*entities.User, error) {
-	fmt.Println("searching by role", roleName)
+	fmt.Println("searching user by role", roleName)
 	user, err := u.repo.SearchByRoleID(roleName)
 	return user, err
 }
