@@ -123,7 +123,7 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 	err = json.Unmarshal(body, &b)
 
 	var newUserRoleID string = "0"
-	if userCount != 0 {
+	if userCount > 0 {
 		// change this to use a routeRepe entry
 		// first registered user is a admin
 		// and this admin can create route repo entries to other users register in this
@@ -216,7 +216,7 @@ func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	routeID, err := a.routesRepo.Gen(fmt.Sprintf("%d", b.RoleID))
+	routeID, err := a.routesRepo.Gen(b.RoleID)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "ROUTE_GEN", http.StatusInternalServerError)
 		return
