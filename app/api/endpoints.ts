@@ -57,8 +57,15 @@ export async function onGetUsers(this: Fetcher): Promise<GetUsersResponse> {
     }
 }
 
-
-
+export async function onDeleteUsers(this: Fetcher, ids: string[]): Promise<GetUsersResponse> {
+    const url = apiUrl(`/admin/users`)
+    try {
+        const res = await this.axios.delete(url, { data: ids.map(f => ({ id: f })) })
+        return await res.data
+    } catch (error) {
+        return (error as AxiosError).response?.data as any
+    }
+}
 
 export async function onAuthToken(this: Fetcher) {
     try {
@@ -246,20 +253,20 @@ export async function onRegisterAction(this: Fetcher, username: string, password
 
 
 
-export async function onResetAccount(this:Fetcher,user: string, secretCode: string): Promise<ApiResponse<{ routeId: string }>> {
+export async function onResetAccount(this: Fetcher, user: string, secretCode: string): Promise<ApiResponse<{ routeId: string }>> {
     const url = apiUrl("/auth/reset")
-  
+
     try {
-      const res = await this.axios.post(url, {
-        secretCode,
-        user
-      })
-  
-      return res.data
+        const res = await this.axios.post(url, {
+            secretCode,
+            user
+        })
+
+        return res.data
     } catch (error: any) {
-      console.log(error)
-      return error.response.data
+        console.log(error)
+        return error.response.data
     }
-  
-  
-  }
+
+
+}

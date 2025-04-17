@@ -3,9 +3,21 @@ interface APIResponse<T = any> {
 }
 
 interface ConfigHashResponse extends APIResponse {
-   Data?: { Hash: string }
+    data?: { Hash: string }
 }
 
 interface CreateRegisterRequestResponse extends APIResponse {
-    Data?: { routeId: string }
- }
+    data?: { routeId: string }
+}
+
+interface GetUsersResponse extends APIResponse {
+    data?: { name: string, role: { id: string, name: string, permissions: string[] } }[]
+}
+
+interface OnGetRolesResponse extends APIResponse {
+    data?: { name: string, permissions: string[],id:string }[]
+}
+
+interface OnPostRolesResponse extends APIResponse {
+    data?: { name: string, permissions: string[], id: string }[]
+}

@@ -5,8 +5,6 @@ import "./Page.less"
 import Ico from "../../../components/Ico.jsx";
 import ControlsReloadButton from "../../../components/ControlsReloadButton.jsx";
 
-
-
 export default function Page() {
   const data = useData<Data>()
   return (
