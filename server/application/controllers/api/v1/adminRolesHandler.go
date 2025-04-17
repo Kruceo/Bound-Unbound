@@ -8,8 +8,9 @@ import (
 )
 
 type GetRolesW struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
+	Name        string   `json:"name"`
+	ID          string   `json:"id"`
+	Permissions []string `json:"permissions"`
 }
 
 func (a *V1AdminHandlers) AdminGetRoles(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +23,7 @@ func (a *V1AdminHandlers) AdminGetRoles(w http.ResponseWriter, r *http.Request) 
 	var response presentation.Response[[]GetRolesW]
 
 	for _, v := range roles {
-		response.Data = append(response.Data, GetRolesW{Name: v.Name, ID: v.ID})
+		response.Data = append(response.Data, GetRolesW{Name: v.Name, ID: v.ID, Permissions: v.Permissions})
 	}
 
 	encoded, err := json.Marshal(response)

@@ -38,9 +38,11 @@ func (j *JWTMiddleware) test(w http.ResponseWriter, r *http.Request) (*jwt.Token
 	user, userAddress := j.jwtManager.ParseJWTSubject(subject)
 
 	if userAddress != strings.Split(r.RemoteAddr, ":")[0] {
+		j.fastErrorResponses.Execute(w, r, "INVALID_ADDRESS", http.StatusUnauthorized)
 		return nil, fmt.Errorf("jwt address does not match with request address")
 	}
-	w.Header().Add("Set-Cookie", "user="+user+"; SameSite=Lax;")
+
+	r.Header.Add("UserID", user)
 
 	return token, nil
 }

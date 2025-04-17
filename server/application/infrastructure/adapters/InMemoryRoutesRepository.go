@@ -6,11 +6,6 @@ import (
 	"sync"
 )
 
-type RoutesRepository interface {
-	Gen() (string, error)
-	Exists(code string) bool
-}
-
 type InMemoryRoutesRepository struct {
 	mu    sync.RWMutex
 	codes map[string]string
