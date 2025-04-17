@@ -10,9 +10,9 @@ export default function ControlsReloadButton(props: { className?: string, nodeId
     useEffect(() => {
         onGetConfigHash(props.nodeId).then(d => {
             const storedHash = window.localStorage.getItem(key)
-            if (!storedHash && d.Data) return window.localStorage.setItem(key, d.Data.Hash)
-            if (d.Data && storedHash != d.Data.Hash) return setChanged(true)
-            if (d.Error)
+            if (!storedHash && d.data) return window.localStorage.setItem(key, d.data.Hash)
+            if (d.data && storedHash != d.data.Hash) return setChanged(true)
+            if (d.error)
                 setProblemWithNode(true)
         })
     }, [props.updateIfItChanges])
