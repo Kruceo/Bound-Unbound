@@ -1,0 +1,60 @@
+@import "./style.less";
+
+.notification {
+    animation: spawn 500ms ease-in-out forwards;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: row;
+    position: fixed;
+    left: 50%;
+    top: 65px;
+    transform: translate(-50%, 0%);
+    background-color: #f73754d0;
+    backdrop-filter: blur(6px);
+    // border: 1px solid @details;
+    min-width: 400px;
+    // justify-content: center;
+    align-items: center;
+
+    .image {
+        display: flex;
+        margin: 0;
+        width: 48px;
+        display: flex;
+        justify-content: center;
+        // height: 100%;
+        // aspect-ratio: 1;
+        // background-color: red;
+        // display: flex;
+        // justify-content: center;
+        // align-items: center;
+    }
+
+    .text {
+        margin-left: 6px;
+        border-left: 1px solid @text;
+        padding-left: 12px;
+
+        h2 {
+            margin: 0;
+        }
+
+        p {
+            margin: 0;
+        }
+    }
+
+}
+
+@keyframes spawn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%,-50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%,0px)
+    }
+}
