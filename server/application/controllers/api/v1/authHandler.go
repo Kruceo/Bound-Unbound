@@ -75,13 +75,35 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request) {
-	_, err := a.jwtManager.TokenFromBearer(r.Header.Get("Authorization"))
-
+	tok, err := a.jwtManager.TokenFromBearer(r.Header.Get("Authorization"))
 	if err != nil {
 		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
+
+	subject, err := tok.Claims.GetSubject()
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	userID, _ := a.jwtManager.ParseJWTSubject(subject)
+
+	user, err := a.userUseCase.Get(userID)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "USER_RECOVERY", http.StatusInternalServerError)
+		return
+	}
+
+	role, err := a.roleUseCase.Get(user.RoleID)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROLE_RECOVERY", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Set-Cookie", "username="+user.Username+"; SameSite=Lax;")
+	w.Header().Add("Set-Cookie", "permissions="+strings.Join(role.Permissions, ",")+"; SameSite=Lax;")
 
 	// user, err := a.userRepo.FindOneByName(".*")
 
@@ -89,9 +111,6 @@ func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request)
 	// 	a.fastErrorResponses.Execute(w, r, "NO_USERS", http.StatusUnauthorized)
 	// 	return
 	// }
-
-	w.Header().Add("Content-Type", "application/json")
-
 	w.Write([]byte("Ok"))
 }
 
