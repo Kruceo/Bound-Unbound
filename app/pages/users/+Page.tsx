@@ -1,5 +1,5 @@
 import { navigate, reload } from "vike/client/router";
-import { onCreateRegisterRequest, onDeleteRoles, onPostRoles } from "./+Page.telefunc";
+import { onCreateRegisterRequest, onDeleteRoles, onDeleteUsers, onPostRoles } from "./+Page.telefunc";
 import { useContext, useState } from "react";
 import Ico from "../../components/Ico";
 import "./Page.less";
@@ -7,7 +7,6 @@ import Input, { Select } from "../../components/Input";
 import Form, { FormBlock } from "../../components/Form";
 import { useData } from "vike-react/useData";
 import { Data } from "./+data";
-import BeautyBox from "../../components/BeautyBox";
 import Table from "../../components/Table";
 import { NotificationContext } from "../../layouts/NotificationContext";
 import { CopyButton } from "../../components/CopyButton";
@@ -15,7 +14,7 @@ import { CopyButton } from "../../components/CopyButton";
 export default function () {
     const { spawnNotification } = useContext(NotificationContext)
     const [selectedRoles, setSelectedRoles] = useState<(string)[]>([])
-    const [seletedUsers, setSelectedUsers] = useState<string[]>([])
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([])
     const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
     const data = useData() as Data
 
@@ -32,18 +31,32 @@ export default function () {
 
     }
 
+    async function onUsersDeleteHandler() {
+        let res: any;
+        try {
+            res = await onDeleteUsers(selectedUsers);
+            if (res.error && res.errorCode) {
+                spawnNotification(res.errorCode);
+            }
+            setSelectedUsers([]);
+            reload();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return <>
         <main id="users-page">
             {DynamicComponent}
 
             <div>
-                <h1 className="page-title">User Manager</h1>
+                <h1 className="page-title">Users</h1>
                 <div className="controls">
                     {
-                        // selected.length > 0 ?
-                        // <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={async () => { await onUnblockAction(data.nodeId, selected); setSelected([]); reload() }}>
-                        // <Ico>delete</Ico>
-                        // </button> : null
+                        selectedUsers.length > 0 ?
+                            <button aria-label="Delete" data-balloon-pos="down" className="delete" onClick={onUsersDeleteHandler}>
+                                <Ico>delete</Ico>
+                            </button> : null
                     }
 
                     <button aria-label="Add User" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(
@@ -56,10 +69,10 @@ export default function () {
                     </button>
                 </div>
             </div>
-            <Table data={data.users} headers={[{ acessor: "name", name: "Name", width: 3 }, { acessor: "role", name: "Role", customHandler(v) { return v.name } }]}></Table>
+            <Table select={{ selected: selectedUsers, setSelected: setSelectedUsers, uniqueKey: "id" }} data={data.users} headers={[{ acessor: "name", name: "Name", width: 3 }, { acessor: "role", name: "Role", customHandler(v) { return v.name } }]}></Table>
             <br></br>
             <div>
-                <h1 className="page-title">User Roles</h1>
+                <h1 className="page-title">Roles</h1>
                 <div className="controls">
                     {
                         selectedRoles.length > 0 ?
@@ -68,7 +81,7 @@ export default function () {
                             </button> : null
                     }
 
-                    <button aria-label="Add User" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(
+                    <button aria-label="Add Role" data-balloon-pos="down" className="add" onClick={() => setDynamicComponent(
                         <AddRoleForm
                             onSubmit={() => { setDynamicComponent(<></>); reload() }}
                             onCancel={() => setDynamicComponent(<></>)}
@@ -80,8 +93,8 @@ export default function () {
             </div>
             <Table select={{ setSelected: setSelectedRoles, selected: selectedRoles, uniqueKey: "id" }} data={data.roles} headers={[
                 { acessor: "name", name: "Name", width: 1 },
-                { acessor: "permissions", name: "Permission", customHandler(v) { return JSON.stringify(v) } }]
-            }/>
+                { acessor: "permissions", name: "Permission", customHandler(v) { return <div className="permissions">{v.map((e:string)=><span id={e}>{e}</span>)}</div> } }]
+            } />
         </main>
     </>
 }
@@ -112,7 +125,7 @@ function AddUserForm(props: { onCancel: () => void, onSubmit: () => void }) {
             <Form title="New User" desc="Adding new user." onCancel={props.onCancel} onSubmit={handler} >
                 <FormBlock columns={1}>
                     <Select title="Role" required name="role" >
-                        {/* {data.data?.map(e => <option key={e.id} value={e.id}>{e.name} {e.permissions}</option>)} */}
+                        {data.roles.map(e => <option key={e.id} value={e.id}>{e.name} {e.permissions}</option>)}
                     </Select>
                 </FormBlock>
             </Form>
@@ -173,10 +186,10 @@ function AddRoleForm(props: { onCancel: () => void, onSubmit: () => void }) {
                     <input type="checkbox" name="permission" value={"view_all_nodes"} />
                     <span>View all nodes</span>
                 </div>
-                <div className="permission">
+                {/* <div className="permission">
                     <input type="checkbox" name="permission" value={"t"} />
                     <span>Test</span>
-                </div>
+                </div> */}
             </div>
         </FormBlock>
     </Form>
