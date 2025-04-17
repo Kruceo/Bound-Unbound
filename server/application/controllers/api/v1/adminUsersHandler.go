@@ -13,6 +13,7 @@ type InnerRole struct {
 }
 
 type GetUsersW struct {
+	ID   string    `json:"id"`
 	Name string    `json:"name"`
 	Role InnerRole `json:"role"`
 }
@@ -34,6 +35,7 @@ func (a *V1AdminHandlers) AdminGetUsers(w http.ResponseWriter, r *http.Request) 
 		}
 
 		response.Data = append(response.Data, GetUsersW{
+			ID:   v.ID,
 			Name: v.Username,
 			Role: InnerRole{
 				ID:          userRole.ID,
@@ -50,6 +52,38 @@ func (a *V1AdminHandlers) AdminGetUsers(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+}
 
+type DeleteUserR struct {
+	ID string `json:"id"`
+}
+
+func (a *V1AdminHandlers) AdminDeleteUsers(w http.ResponseWriter, r *http.Request) {
+	requesterUser, err := a.getUserFromJWTBearerUseCase.Execute(r.Header.Get("authorization"))
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "USER_RECOVERY", http.StatusInternalServerError)
+		return
+	}
+
+	var req []DeleteUserR
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "INVALID_REQUEST", http.StatusBadRequest)
+		return
+	}
+
+	for _, v := range req {
+		if v.ID == requesterUser.ID {
+			a.fastErrorResponses.Execute(w, r, "INVALID_USER", http.StatusBadRequest)
+			return
+		}
+	}
+
+	for _, v := range req {
+		err = a.userUseCase.Delete(v.ID)
+		if err != nil {
+			a.fastErrorResponses.Execute(w, r, "USER_RENOVE", http.StatusInternalServerError)
+			return
+		}
+	}
 }

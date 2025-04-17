@@ -19,5 +19,6 @@ func SetupAdminRouter(r *mux.Router, userRepo infrastructure.UserRepository, rol
 	adminRouter.HandleFunc("/roles", adminController.AdminDeleteRole).Methods("DELETE")
 
 	adminRouter.HandleFunc("/users", adminController.AdminGetUsers).Methods("GET")
+	adminRouter.HandleFunc("/users", adminController.AdminDeleteUsers).Methods("DELETE")
 	return adminRouter
 }
