@@ -2,30 +2,28 @@ import "./Layout.less";
 
 import React, { useEffect, useRef, useState } from "react";
 import SideBar from "./SideBar";
-import { onAuthStatus, onAuthToken } from "./LayoutDefault.telefunc";
+import { NotificationProvider } from "./NotificationContext";
+import { onAuthToken } from "./LayoutDefault.telefunc";
 import { navigate } from "vike/client/router";
 
 export default function LayoutDefault({ children }: { children: React.ReactNode }) {
-  const [logged, setLogged] = useState<boolean>(false)
+  const [logged, setLogged] = useState<boolean>(true)
   const singleExecuted = useRef(false)
   useEffect(() => {
-
     // this is because in dev mode react mounts 2 times all components
     // but this 'onAuthStatus' method have a brute force protection
     if (singleExecuted.current) return console.log("skipped");
     singleExecuted.current = true
 
-    // onAuthStatus().then(f => {
-      onAuthToken().then(d => {
-        if (!d.ok) navigate("/auth/signin")
-        else setLogged(true)
-        if (d.cookies) {
-          for (const cookie of d.cookies) {
-            document.cookie = cookie
-          }
+    onAuthToken().then(d => {
+      if (!d.ok) navigate("/auth/signin")
+      else setLogged(true)
+      if (d.cookies) {
+        for (const cookie of d.cookies) {
+          document.cookie = cookie
         }
-      }).catch(() => navigate("/auth/signin"))
-    // })
+      }
+    }).catch(() => navigate("/auth/signin"))
 
   }, [])
 
@@ -40,7 +38,9 @@ export default function LayoutDefault({ children }: { children: React.ReactNode 
       {
         logged ? <>
           <SideBar></SideBar>
-          <Content>{children}</Content>
+          <NotificationProvider>
+            <Content>{children}</Content>
+          </NotificationProvider>
         </>
           : ""
       }

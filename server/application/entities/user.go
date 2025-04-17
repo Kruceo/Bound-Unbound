@@ -6,12 +6,12 @@ type User struct {
 	ID           string
 	Username     string
 	Password     string
-	Role         uint8
+	RoleID       string
 	RecoveryCode string
 }
 
 func (u *User) IsAdmin() bool {
-	return u.Role == 0
+	return u.RoleID == "0"
 }
 
 func (u *User) SetPassword(hash string) error {
@@ -22,9 +22,9 @@ func (u *User) SetPassword(hash string) error {
 	return nil
 }
 
-func NewUser(id, username, password string, role uint8, recoveryCode string) (User, error) {
+func NewUser(id, username, password string, roleID, recoveryCode string) (User, error) {
 	if len(id) < 1 || len(username) < 3 || len(password) < 8 {
 		return User{}, fmt.Errorf("bad user format")
 	}
-	return User{ID: id, Username: username, Password: password, Role: role, RecoveryCode: recoveryCode}, nil
+	return User{ID: id, Username: username, Password: password, RoleID: roleID, RecoveryCode: recoveryCode}, nil
 }

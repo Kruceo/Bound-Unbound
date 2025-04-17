@@ -23,12 +23,10 @@ type TokenW struct {
 
 func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Add("Content-Type", "application/json")
 	var body []byte
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
-
 		return
 	}
 
@@ -49,11 +47,9 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 
 	storedUser, err := a.userRepo.FindOneByName(b.User)
 	if err != nil {
-		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
-
 	if !a.hashPassword.VerifyPassword(b.Password, storedUser.Password) {
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
@@ -73,19 +69,41 @@ func (a *v1AuthHandlers) AuthLoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", "session="+jwtToken+"; SameSite=none; Secure")
-
 	w.Write(encoded)
 }
 
 func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request) {
-	_, err := a.jwtManager.JWTMiddleware(r)
-
+	tok, err := a.jwtManager.TokenFromBearer(r.Header.Get("Authorization"))
 	if err != nil {
 		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
 		return
 	}
+
+	subject, err := tok.Claims.GetSubject()
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	userID, _ := a.jwtManager.ParseJWTSubject(subject)
+
+	user, err := a.userUseCase.Get(userID)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "USER_RECOVERY", http.StatusInternalServerError)
+		return
+	}
+
+	role, err := a.roleUseCase.Get(user.RoleID)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROLE_RECOVERY", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Set-Cookie", "username="+user.Username+"; SameSite=Lax;")
+	w.Header().Add("Set-Cookie", "permissions="+strings.Join(role.Permissions, ",")+"; SameSite=Lax;")
 
 	// user, err := a.userRepo.FindOneByName(".*")
 
@@ -93,10 +111,13 @@ func (a *v1AuthHandlers) AuthClientToken(w http.ResponseWriter, r *http.Request)
 	// 	a.fastErrorResponses.Execute(w, r, "NO_USERS", http.StatusUnauthorized)
 	// 	return
 	// }
-
-	w.Header().Add("Content-Type", "application/json")
-
 	w.Write([]byte("Ok"))
+}
+
+type RegisterR struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+	RouteId  string `json:"routeId"`
 }
 
 type RegisterW struct {
@@ -104,16 +125,46 @@ type RegisterW struct {
 }
 
 func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	userCount, err := a.userRepo.Count()
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ALREADY_REGISTERED", http.StatusInternalServerError)
+		return
+	}
 
 	var body []byte
-	body, err := io.ReadAll(r.Body)
+	body, err = io.ReadAll(r.Body)
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 		return
 	}
 
-	var b LoginR
+	var b RegisterR
 	err = json.Unmarshal(body, &b)
+
+	var newUserRoleID string = "0"
+	if userCount > 0 {
+		// change this to use a routeRepe entry
+		// first registered user is a admin
+		// and this admin can create route repo entries to other users register in this
+
+		storedRoleID, routeExists := a.routesRepo.Exists(b.RouteId)
+		if !routeExists {
+			a.fastErrorResponses.Execute(w, r, "NOT_FOUND", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			// handle the error
+			a.fastErrorResponses.Execute(w, r, "ROLE_PARSE_ERROR", http.StatusInternalServerError)
+			return
+		}
+
+		newUserRoleID = storedRoleID
+	}
+
+	if _, err = a.roleUseCase.Get(newUserRoleID); err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROLE_NOT_FOUND", http.StatusBadRequest)
+		return
+	}
 
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
@@ -133,7 +184,7 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
 	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
 
-	_, err = a.userRepo.Save(b.User, string(passwordHash), 0, string(hashedSecretCode))
+	_, err = a.userRepo.Save(b.User, string(passwordHash), newUserRoleID, string(hashedSecretCode))
 
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "REPO", http.StatusInternalServerError)
@@ -147,6 +198,59 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Write(encodedRes)
+}
+
+type CreateRegisterR struct {
+	RoleID string `json:"roleId"`
+}
+
+type CreateRegisterW struct {
+	RouteID string `json:"routeId"`
+}
+
+func (a *v1AuthHandlers) AuthCreateRegisterRequest(w http.ResponseWriter, r *http.Request) {
+	requesterUser, err := a.getUserFromJWTBearerUseCase.Execute(r.Header.Get("Authorization"))
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)
+		return
+	}
+
+	if !requesterUser.IsAdmin() {
+		a.fastErrorResponses.Execute(w, r, "NOT_ADMIN", http.StatusUnauthorized)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
+		return
+	}
+
+	var b CreateRegisterR
+	err = json.Unmarshal(body, &b)
+
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_DECODE", http.StatusInternalServerError)
+		return
+	}
+
+	routeID, err := a.routesRepo.Gen(b.RoleID)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "ROUTE_GEN", http.StatusInternalServerError)
+		return
+	}
+
+	var response presentation.Response[CreateRegisterW] = presentation.Response[CreateRegisterW]{Data: CreateRegisterW{RouteID: routeID}}
+
+	responseEncoded, err := json.Marshal(response)
+	if err != nil {
+		a.fastErrorResponses.Execute(w, r, "JSON_ENCODING", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.Write(responseEncoded)
 }
 
 type ResetAccountR struct {
@@ -250,7 +354,7 @@ func (a *v1AuthHandlers) AuthResetAccountPasswordHandler(w http.ResponseWriter, 
 	extraSecretCodeB64 := base64.RawStdEncoding.EncodeToString(extraSecretCode) // real string (will show it to client)
 	hashedSecretCode := a.hashPassword.Hash(extraSecretCodeB64)                 // hashed (store it)
 
-	err = a.userRepo.Update(userId, user.Username, string(passwordHash), user.Role, string(hashedSecretCode))
+	err = a.userRepo.Update(userId, user.Username, string(passwordHash), user.RoleID, string(hashedSecretCode))
 	if err != nil {
 		a.fastErrorResponses.Execute(w, r, "UPDATE_USER", http.StatusInternalServerError)
 		return

@@ -4,16 +4,17 @@ import "./SideBar.less"
 import { navigate } from "vike/client/router"
 import logoImg from '../assets/logo.svg'
 export default function SideBar() {
-    const cookies = newMiniCookieParser()
-    const username = cookies.get("user") ?? "User"
+    // const cookies = newMiniCookieParser()
+    // const username = cookies.get("user") ?? "User"
     return <nav id="sidebar">
         <img src={logoImg} alt="logo" />
         <div className="items">
             <a href="/"><Ico>home</Ico>Dashboard</a>
             <a href="/connections"><Ico>host</Ico>Nodes</a>
+            <a href="/users"><Ico>user</Ico>Users</a>
             {/* <a href="/docs"><Ico>host</Ico>Docs</a> */}
         </div>
-        <UserOptionsButton user={username}></UserOptionsButton>
+        <UserOptionsButton user={"No name"}></UserOptionsButton>
     </nav>
 }
 
@@ -47,7 +48,7 @@ export function UserOptionsButton(props: { user: string }) {
     </>
 }
 
-function newMiniCookieParser() {
-    const cookies = document.cookie.split(/; */).reduce((acc, next) => { const [key, value] = next.split("="); acc[key] = value; return acc }, {} as Record<string, string>)
-    return { get: (k: string) => { return cookies[k] as string | undefined }, ...cookies }
-}
+// function newMiniCookieParser() {
+//     const cookies = document.cookie.split(/; */).reduce((acc, next) => { const [key, value] = next.split("="); acc[key] = value; return acc }, {} as Record<string, string>)
+//     return { get: (k: string) => { return cookies[k] as string | undefined }, ...cookies }
+// }

@@ -22,7 +22,6 @@ func NewFileSystemUserRepo(filePath string) *FileSystemUserRepo {
 func (f *FileSystemUserRepo) loadUsers() (map[string]*entities.User, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
-
 	file, err := os.Open(f.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -36,6 +35,7 @@ func (f *FileSystemUserRepo) loadUsers() (map[string]*entities.User, error) {
 	if err := json.NewDecoder(file).Decode(&users); err != nil {
 		return nil, err
 	}
+
 	return users, nil
 }
 
@@ -52,7 +52,7 @@ func (f *FileSystemUserRepo) saveUsers(users map[string]*entities.User) error {
 	return json.NewEncoder(file).Encode(users)
 }
 
-func (f *FileSystemUserRepo) Save(name, password string, role uint8, recoveryCode string) (string, error) {
+func (f *FileSystemUserRepo) Save(name, password string, roleID string, recoveryCode string) (string, error) {
 	users, err := f.loadUsers()
 	if err != nil {
 		return "", err
@@ -64,7 +64,7 @@ func (f *FileSystemUserRepo) Save(name, password string, role uint8, recoveryCod
 		return "", fmt.Errorf("user id already exists: %s", id)
 	}
 
-	user, err := entities.NewUser(id, name, password, role, recoveryCode)
+	user, err := entities.NewUser(id, name, password, roleID, recoveryCode)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +77,7 @@ func (f *FileSystemUserRepo) Save(name, password string, role uint8, recoveryCod
 	return id, nil
 }
 
-func (f *FileSystemUserRepo) Update(id, name, password string, role uint8, secretCodeHash string) error {
+func (f *FileSystemUserRepo) Update(id, name, password string, roleID string, secretCodeHash string) error {
 	users, err := f.loadUsers()
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (f *FileSystemUserRepo) Update(id, name, password string, role uint8, secre
 	}
 	users[id].Username = name
 	users[id].SetPassword(password)
-	users[id].Role = role
+	users[id].RoleID = roleID
 	users[id].RecoveryCode = secretCodeHash
 
 	err = f.saveUsers(users)
@@ -134,7 +134,6 @@ func (f *FileSystemUserRepo) SearchByName(regex string) ([]*entities.User, error
 	var result []*entities.User
 	r := regexp.MustCompile(regex)
 	for _, user := range users {
-		// fmt.Println(user.Username, r, r.MatchString(user.Username))
 		if r.MatchString(user.Username) {
 			result = append(result, user)
 		}
@@ -142,7 +141,7 @@ func (f *FileSystemUserRepo) SearchByName(regex string) ([]*entities.User, error
 	return result, nil
 }
 
-func (f *FileSystemUserRepo) SearchByRole(role uint8) ([]*entities.User, error) {
+func (f *FileSystemUserRepo) SearchByRoleID(role string) ([]*entities.User, error) {
 	users, err := f.loadUsers()
 	if err != nil {
 		return nil, err
@@ -150,7 +149,7 @@ func (f *FileSystemUserRepo) SearchByRole(role uint8) ([]*entities.User, error) 
 
 	var result []*entities.User
 	for _, user := range users {
-		if user.Role == role {
+		if user.RoleID == fmt.Sprintf("%s", role) {
 			result = append(result, user)
 		}
 	}
@@ -165,10 +164,26 @@ func (f *FileSystemUserRepo) FindOneByName(regex string) (*entities.User, error)
 	return users[0], nil
 }
 
-func (f *FileSystemUserRepo) FindOneByRole(role uint8) (*entities.User, error) {
-	users, err := f.SearchByRole(role)
+func (f *FileSystemUserRepo) FindOneByRoleID(role string) (*entities.User, error) {
+	users, err := f.SearchByRoleID(role)
 	if err != nil || len(users) == 0 {
 		return nil, errors.New("user not found")
 	}
 	return users[0], nil
+}
+
+func (f *FileSystemUserRepo) Count() (int, error) {
+	users, err := f.loadUsers()
+	if err != nil {
+		return 0, err
+	}
+	return len(users), nil
+}
+
+func (f *FileSystemUserRepo) CountByRoleID(role string) (int, error) {
+	return 0, fmt.Errorf("not implemented")
+}
+
+func (f *FileSystemUserRepo) CountByName(name string) (int, error) {
+	return 0, fmt.Errorf("not implemented")
 }

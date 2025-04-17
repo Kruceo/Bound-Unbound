@@ -3,7 +3,7 @@ import type { Data } from "./+data.js";
 import "./Page.less"
 import { useState } from "react";
 import { navigate, reload } from "vike/client/router";
-import { onBlockAction, onGetConfigHash, onReloadActions, onUnblockAction } from '../../actions.telefunc.js'
+import { onBlockAction, onUnblockAction } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
 import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
 import Input from "../../../../components/Input.jsx";

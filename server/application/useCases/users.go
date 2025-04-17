@@ -5,7 +5,8 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"net/http"
+	"server2/application/entities"
+	"server2/application/infrastructure"
 	"strings"
 	"time"
 
@@ -95,10 +96,10 @@ func NewJWTUseCase(sessionSecret string) *JwtUseCase {
 	return &JwtUseCase{sessionSecret: sessionSecret}
 }
 
-// generate a JWT token with username and string as subject ('sub' claim)
-func (j *JwtUseCase) GenerateJWT(username string, address string) (string, error) {
+// generate a JWT token with userid and string as subject ('sub' claim)
+func (j *JwtUseCase) GenerateJWT(userId string, address string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": fmt.Sprintf("%s$%s", username, address),
+		"sub": fmt.Sprintf("%s$%s", userId, address),
 		"exp": time.Now().Add(time.Second * 3600).Unix(),
 		"iat": time.Now().Unix(),
 	}
@@ -113,7 +114,7 @@ func (j *JwtUseCase) GenerateJWT(username string, address string) (string, error
 	return tokenString, nil
 }
 
-// returns username and address without port (string,string)
+// returns userid and address without port (string,string)
 func (j *JwtUseCase) ParseJWTSubject(subject string) (string, string) {
 	splited := strings.Split(subject, "$")
 	return splited[0], strings.Split(splited[1], ":")[0]
@@ -138,31 +139,103 @@ func (j *JwtUseCase) ValidateJWT(tokenString string) (*jwt.Token, error) {
 	return token, nil
 }
 
-// verify if authorization is a valid jwt, and if jwt address is compatible with requester ip
-func (j *JwtUseCase) JWTMiddleware(r *http.Request) (*jwt.Token, error) {
-	authorization, _ := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+// verify if authorization header (bearer xxxxxxxxxx) is a valid jwt, and if jwt address is compatible with requester ip
+func (j *JwtUseCase) TokenFromBearer(bearer string) (*jwt.Token, error) {
+	authorization, _ := strings.CutPrefix(bearer, "Bearer ")
 	token, err := j.ValidateJWT(string(authorization))
 
 	if err != nil {
-		fmt.Println(err)
-		// FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
 		return nil, err
 	}
 
-	subject, err := token.Claims.GetSubject()
+	// subject, err := token.Claims.GetSubject()
 
-	if err != nil {
-		fmt.Println(err)
-		// FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
-		return nil, err
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
 
-	_, userAddress := j.ParseJWTSubject(subject)
+	// _, userAddress := j.ParseJWTSubject(subject)
 
-	if userAddress != strings.Split(r.RemoteAddr, ":")[0] {
-		// FastErrorResponse(w, r, "AUTH", http.StatusUnauthorized)
-		return nil, fmt.Errorf("jwt address does not match with request address")
-	}
+	// if userAddress != strings.Split(r.RemoteAddr, ":")[0] {
+	// 	return nil, fmt.Errorf("jwt address does not match with request address")
+	// }
 
 	return token, nil
+}
+
+type GetUserFromJWTBearerUseCase struct {
+	jwtUseCase *JwtUseCase
+	userRepo   infrastructure.UserRepository
+}
+
+func NewGetUserFromJWTBearerUseCase(userRepo infrastructure.UserRepository, jwtUseCase *JwtUseCase) *GetUserFromJWTBearerUseCase {
+	return &GetUserFromJWTBearerUseCase{userRepo: userRepo, jwtUseCase: jwtUseCase}
+}
+
+// get the user with userID stored at jwt subject
+func (gu *GetUserFromJWTBearerUseCase) Execute(bearer string) (*entities.User, error) {
+	token, err := gu.jwtUseCase.TokenFromBearer(bearer)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	jwtSubject, ok := token.Claims.(jwt.MapClaims)["sub"].(string)
+
+	if !ok || jwtSubject == "" {
+		return nil, fmt.Errorf("invalid subject")
+	}
+
+	userid, _ := gu.jwtUseCase.ParseJWTSubject(jwtSubject)
+	userUseCase := NewUserUseCase(gu.userRepo)
+	requesterUser, err := userUseCase.Get(userid)
+	if err != nil {
+		return nil, err
+	}
+	return requesterUser, nil
+}
+
+type UserUseCase struct {
+	repo infrastructure.UserRepository
+}
+
+func NewUserUseCase(repo infrastructure.UserRepository) *UserUseCase {
+	return &UserUseCase{repo: repo}
+}
+
+func (u *UserUseCase) Save(username string, password string, roleID string, secret string) (string, error) {
+	fmt.Println("saving user", username)
+	id, err := u.repo.Save(username, password, roleID, secret)
+	return id, err
+}
+
+func (u *UserUseCase) Update(id, username string, password string, roleID string, secret string) error {
+	fmt.Println("updating user", id)
+	err := u.repo.Update(id, username, password, roleID, secret)
+	return err
+}
+
+func (u *UserUseCase) Get(id string) (*entities.User, error) {
+	fmt.Println("getting user", id)
+	user, err := u.repo.Get(id)
+	return user, err
+}
+
+func (u *UserUseCase) Delete(id string) error {
+	fmt.Println("deleting user", id)
+	err := u.repo.Delete(id)
+	return err
+}
+
+func (u *UserUseCase) SearchByName(regex string) ([]*entities.User, error) {
+	fmt.Println("searching user by name", regex)
+	users, err := u.repo.SearchByName(regex)
+	return users, err
+}
+
+func (u *UserUseCase) SearchByRoleID(roleName string) ([]*entities.User, error) {
+	fmt.Println("searching user by role", roleName)
+	user, err := u.repo.SearchByRoleID(roleName)
+	return user, err
 }

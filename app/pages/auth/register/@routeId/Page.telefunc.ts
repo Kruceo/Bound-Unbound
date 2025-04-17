@@ -1,5 +1,4 @@
 import { ApiResponse, apiUrl, useAPI } from "../../../../api/api"
 
-const {onResetPassword} = useAPI()
-
-export {onResetPassword}
+const {onRegisterAction} = useAPI()
+export {onRegisterAction}

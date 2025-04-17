@@ -2,31 +2,27 @@ package v1
 
 import (
 	"server2/application/infrastructure"
-	"server2/application/infrastructure/adapters"
 	"server2/application/presentation"
 	usecases "server2/application/useCases"
 )
 
-type v1AuthHandlers struct {
+type V1AdminHandlers struct {
 	roleUseCase                 *usecases.RoleUseCase
 	userUseCase                 *usecases.UserUseCase
 	getUserFromJWTBearerUseCase *usecases.GetUserFromJWTBearerUseCase
-	userRepo                    infrastructure.UserRepository
-	routesRepo                  infrastructure.RoutesRepository
-	hashPassword                usecases.PassowrdHashUseCase
+	hashPassword                *usecases.PassowrdHashUseCase
 	jwtManager                  *usecases.JwtUseCase
 	fastErrorResponses          presentation.FastErrorResponses
 }
 
-func NewV1AuthHandlers(userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, jwtUseCase *usecases.JwtUseCase) *v1AuthHandlers {
-	return &v1AuthHandlers{
+func NewV1AdminHandlers(userRepo infrastructure.UserRepository, roleRepo infrastructure.RoleRepository, jwtUseCase *usecases.JwtUseCase) *V1AdminHandlers {
+	pwMan := usecases.NewPassowrdHashUseCase()
+	return &V1AdminHandlers{
 		roleUseCase:                 usecases.NewRoleUseCase(roleRepo),
 		userUseCase:                 usecases.NewUserUseCase(userRepo),
 		getUserFromJWTBearerUseCase: usecases.NewGetUserFromJWTBearerUseCase(userRepo, jwtUseCase),
-		userRepo:                    userRepo,
 		jwtManager:                  jwtUseCase,
-		hashPassword:                usecases.NewPassowrdHashUseCase(),
+		hashPassword:                &pwMan,
 		fastErrorResponses:          presentation.NewFastErrorResponses(),
-		routesRepo:                  adapters.NewInMemoryRoutesRepository(),
 	}
 }

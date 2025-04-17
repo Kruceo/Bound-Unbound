@@ -17,14 +17,17 @@ type ResponsesReporisory interface {
 }
 
 type UserRepository interface {
-	Save(name, password string, role uint8, recoveryCode string) (string, error)
-	Update(id, name, password string, role uint8, secretCode string) error
+	Save(name, password string, roleID string, recoveryCode string) (string, error)
+	Update(id, name, password string, roleID string, secretCode string) error
 	Get(id string) (*entities.User, error)
 	Delete(id string) error
 	SearchByName(regex string) ([]*entities.User, error)
-	SearchByRole(role uint8) ([]*entities.User, error)
+	SearchByRoleID(role string) ([]*entities.User, error)
 	FindOneByName(regex string) (*entities.User, error)
-	FindOneByRole(role uint8) (*entities.User, error)
+	FindOneByRoleID(role string) (*entities.User, error)
+	Count() (int, error)
+	CountByRoleID(role string) (int, error)
+	CountByName(regex string) (int, error)
 }
 
 type RoutesRepository interface {
@@ -35,4 +38,16 @@ type RoutesRepository interface {
 type RequestBlocker interface {
 	IsBlocked(ip string) bool
 	MarkAttempt(ip string)
+}
+
+type RoleRepository interface {
+	Create(*entities.Role) (string, error)
+	Get(id string) (*entities.Role, error)
+	Delete(id string) error
+	Update(*entities.Role) error
+	GetAll(limit int) ([]*entities.Role, error)
+	SearchByName(name string, limit int) ([]*entities.Role, error)
+	CreateIfNotExists(*entities.Role) (bool, error)
+	NextID() (string, error)
+	Count() (int, error)
 }
