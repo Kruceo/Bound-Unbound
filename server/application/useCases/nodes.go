@@ -9,70 +9,49 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type SaveNodeUseCase struct {
-	Repo *infrastructure.NodeRepository
+type NodePersistenceUseCase struct {
+	repo infrastructure.NodeRepository
 }
 
-func (r *SaveNodeUseCase) Execute(Conn *websocket.Conn, Name string, Cipher cipher.AEAD) (string, error) {
-	return (*r.Repo).Save(entities.Node{Conn: Conn, Name: Name, Cipher: Cipher})
+func NewNodePersistenceUseCase(repo infrastructure.NodeRepository) *NodePersistenceUseCase {
+	return &NodePersistenceUseCase{repo: repo}
 }
 
-type CreateNodeUseCase struct{}
-
-func (r *CreateNodeUseCase) Execute(conn *websocket.Conn, name string, cipher cipher.AEAD) (*entities.Node, error) {
-	node := entities.Node{Conn: conn, Name: name, Cipher: cipher}
-	if len(name) == 0 {
-		return nil, fmt.Errorf("bad name: %s", name)
-	}
-	if conn == nil {
-		return nil, fmt.Errorf("bad connection: %v", conn)
-	}
-	return &node, nil
+func (r *NodePersistenceUseCase) Save(id, name string, conn *websocket.Conn, cipher *cipher.AEAD) (string, error) {
+	return r.repo.Save(id, name, conn, cipher)
 }
 
 // Get
 
-type GetNodeUseCase struct {
-	Repo *infrastructure.NodeRepository
-}
-
-func (r *GetNodeUseCase) Execute(id string) *entities.Node {
-	return (*r.Repo).Get(id)
+func (r *NodePersistenceUseCase) Get(id string) *entities.Node {
+	return r.repo.Get(id)
 }
 
 // ids
 
-type GetStoredNodesUseCase struct {
-	Repo *infrastructure.NodeRepository
-}
-
-func (r GetStoredNodesUseCase) Execute() []string {
-	return (*r.Repo).IDs()
+func (r NodePersistenceUseCase) IDs() []string {
+	return r.repo.IDs()
 }
 
 // delete
 
-type DeleteNodeUseCase struct {
-	Repo *infrastructure.NodeRepository
+func (r *NodePersistenceUseCase) Delete(id string) error {
+	return r.repo.Delete(id)
 }
 
-func (r *DeleteNodeUseCase) Execute(id string) error {
-	return (*r.Repo).Delete(id)
-}
-
-type GetOrCreateUseCase struct {
-	Repo *infrastructure.NodeRepository
-}
-
-func (uc *GetOrCreateUseCase) Execute(nodeID string, conn *websocket.Conn) (*entities.Node, error) {
-	node := (*uc.Repo).Get(nodeID)
+func (uc *NodePersistenceUseCase) GetOrCreate(nodeID string, conn *websocket.Conn) (*entities.Node, error) {
+	node := uc.repo.Get(nodeID)
 	if node == nil {
-		node = &entities.Node{Conn: conn, Name: "nameless", Cipher: nil}
-		_, err := (*uc.Repo).Save(*node)
+
+		_, err := uc.repo.Save(nodeID, node.Name, conn, nil)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 	}
 	return node, nil
+}
+
+func (r *NodePersistenceUseCase) FindOneByRemoteAddress(remoteAddr string) (*entities.Node, error) {
+	return r.repo.FindOneByRemoteAddress(remoteAddr)
 }
