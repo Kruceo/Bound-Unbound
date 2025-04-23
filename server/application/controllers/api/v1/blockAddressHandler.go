@@ -26,14 +26,12 @@ type BlockedNamesR struct {
 
 func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Request) {
 
-	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
-
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
 
 	if r.Method == "GET" {
 
-		client := getNode.Execute(connectionName)
+		client := bh.nodePersistenceUseCase.Get(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
@@ -41,7 +39,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 
 		id := fmt.Sprintf("%x", rand.Int())
 
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list blocked", id), &client.Cipher)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list blocked", id), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
@@ -83,7 +81,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		return
 	} else if r.Method == "POST" {
 
-		client := getNode.Execute(connectionName)
+		client := bh.nodePersistenceUseCase.Get(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
@@ -112,7 +110,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		id := fmt.Sprintf("%X", rand.Int())
 		// client.Send(, true)
 
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s block %s", id, strings.Join(b.Names, ",")), &client.Cipher)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s block %s", id, strings.Join(b.Names, ",")), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
@@ -133,7 +131,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-		client := getNode.Execute(connectionName)
+		client := bh.nodePersistenceUseCase.Get(connectionName)
 		if client == nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
@@ -155,7 +153,7 @@ func (bh *V1APIHandlers) BlockAddressHandler(w http.ResponseWriter, r *http.Requ
 		}
 
 		id := fmt.Sprintf("%X", rand.Int())
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unblock %s", id, strings.Join(b.Names, ",")), &client.Cipher)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unblock %s", id, strings.Join(b.Names, ",")), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"server2/application/presentation"
-	usecases "server2/application/useCases"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -18,17 +17,16 @@ type HashR struct {
 }
 
 func (bh *V1APIHandlers) ConfigHashHandler(w http.ResponseWriter, r *http.Request) {
-	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
-	client := getNode.Execute(connectionName)
+	client := bh.nodePersistenceUseCase.Get(connectionName)
 	if client == nil {
 		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 
 	id := fmt.Sprintf("%x", rand.Int())
-	encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list confighash", id), &client.Cipher)
+	encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list confighash", id), client.Cipher)
 
 	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)

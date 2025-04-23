@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"server2/application/presentation"
-	usecases "server2/application/useCases"
 )
 
 type ConnectionW struct {
@@ -18,11 +17,9 @@ func (bh V1APIHandlers) ConnectionsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
-
 	var b presentation.Response[[]ConnectionW] = presentation.Response[[]ConnectionW]{Data: make([]ConnectionW, 0), Message: ""}
-	for _, v := range bh.nodeRepo.IDs() {
-		node := getNode.Execute(v)
+	for _, v := range bh.nodePersistenceUseCase.IDs() {
+		node := bh.nodePersistenceUseCase.Get(v)
 		b.Data = append(b.Data, ConnectionW{Name: node.Name, RemoteAddress: v})
 	}
 
