@@ -1,10 +1,16 @@
 package infrastructure
 
-import "server2/application/entities"
+import (
+	"crypto/cipher"
+	"server2/application/entities"
+
+	"github.com/gorilla/websocket"
+)
 
 type NodeRepository interface {
-	Save(node entities.Node) (string, error)
+	Save(id, name string, conn *websocket.Conn, cipher *cipher.AEAD) (string, error)
 	Get(id string) *entities.Node
+	FindOneByRemoteAddress(remoteAddr string) (*entities.Node, error)
 	Delete(id string) error
 	IDs() []string
 }
