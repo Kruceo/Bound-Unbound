@@ -63,8 +63,8 @@ func (wsc *HostController) SendEncryptedMessageToNode(nodeId string, id string, 
 		return err
 	}
 
-	node := wsc.nodePersistence.Get(nodeId)
-	if node == nil {
+	node, err := wsc.nodePersistence.Get(nodeId)
+	if err != nil {
 		return fmt.Errorf("node not found: %s", nodeId)
 	}
 
@@ -127,12 +127,12 @@ func (wsc *HostController) SendConnectToNode(nodeId string) error {
 	fmt.Println("connecting with", nodeId)
 	var encodedPublicKey = base64.RawStdEncoding.EncodeToString(wsc.publicKey.Bytes())
 
-	node := wsc.nodePersistence.Get(nodeId)
-	if node == nil {
+	node, err := wsc.nodePersistence.Get(nodeId)
+	if err != nil {
 		return fmt.Errorf("node not found: %s", nodeId)
 	}
 
-	err := node.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
+	err = node.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
 	return err
 }
 

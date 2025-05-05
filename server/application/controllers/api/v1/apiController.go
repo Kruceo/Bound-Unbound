@@ -9,9 +9,10 @@ import (
 type V1APIHandlers struct {
 	nodePersistenceUseCase *usecases.NodePersistenceUseCase
 	responseRepo           infrastructure.ResponsesReporisory
+	nodeRoleBindUseCase    *usecases.NodeRoleBindPersistenceUseCase
 	fastErrorResponses     presentation.FastErrorResponses
 }
 
-func NewV1Handlers(NodeRepo infrastructure.NodeRepository, ResponseRepo infrastructure.ResponsesReporisory) *V1APIHandlers {
-	return &V1APIHandlers{nodePersistenceUseCase: usecases.NewNodePersistenceUseCase(NodeRepo), responseRepo: ResponseRepo, fastErrorResponses: presentation.NewFastErrorResponses()}
+func NewV1Handlers(NodeRepo infrastructure.NodeRepository, nodeRoleRepo infrastructure.NodeRoleBindRepository, roleRepo infrastructure.RoleRepository, ResponseRepo infrastructure.ResponsesReporisory) *V1APIHandlers {
+	return &V1APIHandlers{nodePersistenceUseCase: usecases.NewNodePersistenceUseCase(NodeRepo), nodeRoleBindUseCase: usecases.NewNodeRoleBindPersistenceUseCase(nodeRoleRepo, NodeRepo, roleRepo), responseRepo: ResponseRepo, fastErrorResponses: presentation.NewFastErrorResponses()}
 }

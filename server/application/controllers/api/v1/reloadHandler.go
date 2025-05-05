@@ -18,8 +18,8 @@ func (bh *V1APIHandlers) ReloadHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
 
-	client := bh.nodePersistenceUseCase.Get(connectionName)
-	if client == nil {
+	client, err := bh.nodePersistenceUseCase.Get(connectionName)
+	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}

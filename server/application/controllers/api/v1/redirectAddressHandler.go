@@ -32,8 +32,8 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
 	if r.Method == "GET" {
-		client := bh.nodePersistenceUseCase.Get(connectionName)
-		if client == nil {
+		client, err := bh.nodePersistenceUseCase.Get(connectionName)
+		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
@@ -86,14 +86,14 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(decoded)
 		return
 	} else if r.Method == "POST" {
-		client := bh.nodePersistenceUseCase.Get(connectionName)
-		if client == nil {
+		client, err := bh.nodePersistenceUseCase.Get(connectionName)
+		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
-		body, err := io.ReadAll(r.Body)
+		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
@@ -134,14 +134,14 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-		client := bh.nodePersistenceUseCase.Get(connectionName)
-		if client == nil {
+		client, err := bh.nodePersistenceUseCase.Get(connectionName)
+		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 			return
 		}
 
 		var body []byte
-		body, err := io.ReadAll(r.Body)
+		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return

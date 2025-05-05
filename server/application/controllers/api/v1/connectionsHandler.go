@@ -18,11 +18,15 @@ func (bh V1APIHandlers) ConnectionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	var b presentation.Response[[]ConnectionW] = presentation.Response[[]ConnectionW]{Data: make([]ConnectionW, 0), Message: ""}
-	for _, v := range bh.nodePersistenceUseCase.IDs() {
-		node := bh.nodePersistenceUseCase.Get(v)
-		b.Data = append(b.Data, ConnectionW{Name: node.Name, RemoteAddress: v})
+	// gets the reader defined at specific role middleware
+	nodes, err := bh.nodeRoleBindUseCase.GetNodesForRole(r.Header.Get("X-Role-ID"))
+	if err != nil {
+		bh.fastErrorResponses.Execute(w, r, "RECOVER_NODES", http.StatusInternalServerError)
+		return
 	}
-
+	for _, v := range nodes {
+		b.Data = append(b.Data, ConnectionW{Name: v.Name, RemoteAddress: v.ID})
+	}
 	decoded, err := json.Marshal(b)
 	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "JSON_ENCODING", http.StatusInternalServerError)
