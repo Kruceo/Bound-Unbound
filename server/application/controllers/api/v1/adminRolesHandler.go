@@ -17,6 +17,7 @@ func (a *V1AdminHandlers) AdminGetRoles(w http.ResponseWriter, r *http.Request) 
 
 	roles, err := a.roleUseCase.GetAll(258)
 	if err != nil {
+		fmt.Println(err)
 		a.fastErrorResponses.Execute(w, r, "ROLE_REPO", http.StatusInternalServerError)
 	}
 

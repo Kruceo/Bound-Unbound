@@ -28,7 +28,7 @@ type GetBindsW struct {
 func (ad *V1AdminHandlers) AdminGetBinds(w http.ResponseWriter, r *http.Request) {
 	binds, err := ad.bindsPersistence.GetAllWithIncluded(2048)
 	if err != nil {
-		ad.fastErrorResponses.Execute(w, r, "ROLE_REPO", http.StatusInternalServerError)
+		ad.fastErrorResponses.Execute(w, r, "BIND_GET", http.StatusInternalServerError)
 		return
 	}
 

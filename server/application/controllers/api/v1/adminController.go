@@ -21,7 +21,7 @@ func NewV1AdminHandlers(userRepo infrastructure.UserRepository, roleRepo infrast
 	return &V1AdminHandlers{
 		roleUseCase:                 usecases.NewRoleUseCase(roleRepo),
 		userUseCase:                 usecases.NewUserUseCase(userRepo),
-		bindsPersistence:            usecases.NewNodeRoleBindPersistenceUseCase(nrbRepo, nodeRepo, roleRepo),
+		bindsPersistence:            usecases.NewNodeRoleBindPersistenceUseCase(nrbRepo, usecases.NewNodePersistenceUseCase(nodeRepo), usecases.NewRoleUseCase(roleRepo)),
 		getUserFromJWTBearerUseCase: usecases.NewGetUserFromJWTBearerUseCase(userRepo, jwtUseCase),
 		jwtManager:                  jwtUseCase,
 		hashPassword:                &pwMan,

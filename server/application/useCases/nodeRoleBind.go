@@ -7,28 +7,29 @@ import (
 )
 
 type NodeRoleBindPersistenceUseCase struct {
-	nrbRepo  infrastructure.NodeRoleBindRepository
-	nodeRepo infrastructure.NodeRepository
-	roleRepo infrastructure.RoleRepository
+	nrbRepo infrastructure.NodeRoleBindRepository
+	nodes   *NodePersistenceUseCase
+	roles   *RoleUseCase
 }
 
 func NewNodeRoleBindPersistenceUseCase(
 	nrbRepo infrastructure.NodeRoleBindRepository,
-	nodeRepo infrastructure.NodeRepository,
-	roleRepo infrastructure.RoleRepository) *NodeRoleBindPersistenceUseCase {
+	nodes *NodePersistenceUseCase,
+	roles *RoleUseCase,
+) *NodeRoleBindPersistenceUseCase {
 	return &NodeRoleBindPersistenceUseCase{
-		nrbRepo:  nrbRepo,
-		nodeRepo: nodeRepo,
-		roleRepo: roleRepo,
+		nrbRepo: nrbRepo,
+		nodes:   nodes,
+		roles:   roles,
 	}
 }
 
 func (nr *NodeRoleBindPersistenceUseCase) Bind(nodeID string, roleID string) (string, error) {
-	_, err := nr.nodeRepo.Get(nodeID)
+	_, err := nr.nodes.Get(nodeID)
 	if err != nil {
 		return "", err
 	}
-	_, err = nr.roleRepo.Get(roleID)
+	_, err = nr.roles.Get(roleID)
 	if err != nil {
 		return "", err
 	}
@@ -65,18 +66,19 @@ type GetAllUseCaseResponse struct {
 
 func (nr *NodeRoleBindPersistenceUseCase) GetAllWithIncluded(limit int) ([]GetAllUseCaseResponse, error) {
 	recovered, err := nr.nrbRepo.GetAll(limit)
-	if err != nil { // handle unhandled error in this function
+	if err != nil {
 		return nil, err
 	}
 	res := make([]GetAllUseCaseResponse, 0, len(recovered))
 
 	for _, v := range recovered {
-		node, err := nr.nodeRepo.Get(v.NodeID)
+		node, err := nr.nodes.Get(v.NodeID)
 		if err != nil {
 			return nil, err
 		}
-		role, err := nr.roleRepo.Get(v.RoleID)
+		role, err := nr.roles.Get(v.RoleID)
 		if err != nil {
+			fmt.Println("error:", err, v.RoleID)
 			return nil, err
 		}
 		res = append(res, GetAllUseCaseResponse{ID: v.ID, Node: *node, Role: *role})
@@ -86,16 +88,16 @@ func (nr *NodeRoleBindPersistenceUseCase) GetAllWithIncluded(limit int) ([]GetAl
 
 func (nr *NodeRoleBindPersistenceUseCase) GetNodesForRole(roleID string) ([]*entities.Node, error) {
 	fmt.Println("getting nodes for role", roleID)
-	role, err := nr.roleRepo.Get(roleID)
+	role, err := nr.roles.Get(roleID)
 	if err != nil {
 		return nil, err
 	}
 
 	if role.HasPerm("admin") {
-		ids := nr.nodeRepo.IDs()
+		ids := nr.nodes.IDs()
 		nodes := []*entities.Node{}
 		for _, v := range ids {
-			node, err := nr.nodeRepo.Get(v)
+			node, err := nr.nodes.Get(v)
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +117,7 @@ func (nr *NodeRoleBindPersistenceUseCase) GetNodesForRole(roleID string) ([]*ent
 	}
 	list := []*entities.Node{}
 	for _, v := range tmp {
-		node, err := nr.nodeRepo.Get(*v)
+		node, err := nr.nodes.Get(*v)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
@@ -123,6 +125,19 @@ func (nr *NodeRoleBindPersistenceUseCase) GetNodesForRole(roleID string) ([]*ent
 		list = append(list, node)
 	}
 	return list, nil
+}
+
+func (nr *NodeRoleBindPersistenceUseCase) GetAndCheckNode(nodeID, roleID string) (*entities.Node, error) {
+	nodes, err := nr.GetNodesForRole(roleID)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range nodes {
+		if v.ID == nodeID {
+			return v, nil
+		}
+	}
+	return nil, fmt.Errorf("this node don't exists or is not binded to this role")
 }
 
 func (nr *NodeRoleBindPersistenceUseCase) Update(id string, nodeID string, roleID string) error {

@@ -14,5 +14,5 @@ type V1APIHandlers struct {
 }
 
 func NewV1Handlers(NodeRepo infrastructure.NodeRepository, nodeRoleRepo infrastructure.NodeRoleBindRepository, roleRepo infrastructure.RoleRepository, ResponseRepo infrastructure.ResponsesReporisory) *V1APIHandlers {
-	return &V1APIHandlers{nodePersistenceUseCase: usecases.NewNodePersistenceUseCase(NodeRepo), nodeRoleBindUseCase: usecases.NewNodeRoleBindPersistenceUseCase(nodeRoleRepo, NodeRepo, roleRepo), responseRepo: ResponseRepo, fastErrorResponses: presentation.NewFastErrorResponses()}
+	return &V1APIHandlers{nodePersistenceUseCase: usecases.NewNodePersistenceUseCase(NodeRepo), nodeRoleBindUseCase: usecases.NewNodeRoleBindPersistenceUseCase(nodeRoleRepo, usecases.NewNodePersistenceUseCase(NodeRepo), usecases.NewRoleUseCase(roleRepo)), responseRepo: ResponseRepo, fastErrorResponses: presentation.NewFastErrorResponses()}
 }

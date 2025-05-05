@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"fmt"
 	"server2/application/entities"
 	"server2/application/infrastructure"
 )
@@ -30,6 +31,7 @@ func (u *RoleUseCase) Save(name string, permissions []string) (string, error) {
 }
 
 func (u *RoleUseCase) Get(id string) (*entities.Role, error) {
+	fmt.Println("get role", id)
 	return u.repo.Get(id)
 }
 

@@ -31,13 +31,13 @@ type RedirectR struct {
 func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
+	roleID := r.Header.Get("X-Role-ID")
+	client, err := bh.nodeRoleBindUseCase.GetAndCheckNode(connectionName, roleID)
+	if err != nil {
+		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+		return
+	}
 	if r.Method == "GET" {
-		client, err := bh.nodePersistenceUseCase.Get(connectionName)
-		if err != nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
 		id := fmt.Sprintf("%x", rand.Int())
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list redirects", id), client.Cipher)
 
@@ -86,12 +86,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(decoded)
 		return
 	} else if r.Method == "POST" {
-		client, err := bh.nodePersistenceUseCase.Get(connectionName)
-		if err != nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
 		var body []byte
 		body, err = io.ReadAll(r.Body)
 		if err != nil {
@@ -134,12 +128,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-		client, err := bh.nodePersistenceUseCase.Get(connectionName)
-		if err != nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
 		var body []byte
 		body, err = io.ReadAll(r.Body)
 		if err != nil {

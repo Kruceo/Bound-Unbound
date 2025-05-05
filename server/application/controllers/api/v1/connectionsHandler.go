@@ -13,17 +13,14 @@ type ConnectionW struct {
 }
 
 func (bh V1APIHandlers) ConnectionsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		return
-	}
 
-	var b presentation.Response[[]ConnectionW] = presentation.Response[[]ConnectionW]{Data: make([]ConnectionW, 0), Message: ""}
 	// gets the reader defined at specific role middleware
 	nodes, err := bh.nodeRoleBindUseCase.GetNodesForRole(r.Header.Get("X-Role-ID"))
 	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "RECOVER_NODES", http.StatusInternalServerError)
 		return
 	}
+	var b presentation.Response[[]ConnectionW] = presentation.Response[[]ConnectionW]{Data: make([]ConnectionW, 0), Message: ""}
 	for _, v := range nodes {
 		b.Data = append(b.Data, ConnectionW{Name: v.Name, RemoteAddress: v.ID})
 	}
