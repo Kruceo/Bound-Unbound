@@ -1,11 +1,13 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 	"server2/application/infrastructure"
 	"server2/application/presentation"
 	usecases "server2/application/useCases"
 	"slices"
+	"strings"
 )
 
 type RoleMiddleware struct {
@@ -38,20 +40,18 @@ func (rm *RoleMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Permissão universal
 		if slices.Contains(rm.permissions, "*") {
+			fmt.Println("any perm can reach this route")
 			r.Header.Set("X-Role-ID", requesterUser.RoleID)
 			next.ServeHTTP(w, r)
 			return
 		}
-
-		// Constrói um set com as permissões do usuário para busca rápida
+		fmt.Println("just perm", strings.Join(rm.permissions, ","))
 		permSet := make(map[string]struct{})
 		for _, perm := range userRole.Permissions {
 			permSet[perm] = struct{}{}
 		}
 
-		// Verifica se o usuário tem todas as permissões requeridas
 		for _, requiredPerm := range rm.permissions {
 			if _, ok := permSet[requiredPerm]; !ok {
 				rm.fastErrorResponses.Execute(w, r, "AUTH", http.StatusUnauthorized)

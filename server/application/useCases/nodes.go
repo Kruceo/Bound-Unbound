@@ -23,7 +23,7 @@ func (r *NodePersistenceUseCase) Save(id, name string, conn *websocket.Conn, cip
 
 // Get
 
-func (r *NodePersistenceUseCase) Get(id string) *entities.Node {
+func (r *NodePersistenceUseCase) Get(id string) (*entities.Node, error) {
 	return r.repo.Get(id)
 }
 
@@ -40,8 +40,8 @@ func (r *NodePersistenceUseCase) Delete(id string) error {
 }
 
 func (uc *NodePersistenceUseCase) GetOrCreate(nodeID string, conn *websocket.Conn) (*entities.Node, error) {
-	node := uc.repo.Get(nodeID)
-	if node == nil {
+	node, err := uc.repo.Get(nodeID)
+	if node == nil || err != nil {
 
 		_, err := uc.repo.Save(nodeID, node.Name, conn, nil)
 		if err != nil {

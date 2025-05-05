@@ -7,10 +7,10 @@ type RoleNodeBind struct {
 }
 
 // RoleNodeBind is a constructor for initializing a new instance of RoleNodeBind.
-func NewRoleNodeBind(id string, nodeID string, roleID string) *RoleNodeBind {
+func NewRoleNodeBind(id string, nodeID string, roleID string) (*RoleNodeBind, error) {
 	return &RoleNodeBind{
 		ID:     id,
 		NodeID: nodeID,
 		RoleID: roleID,
-	}
+	}, nil
 }

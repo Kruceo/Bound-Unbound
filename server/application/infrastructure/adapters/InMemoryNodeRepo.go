@@ -22,14 +22,14 @@ func (r *InMemoryNodeRepository) Save(id, name string, conn *websocket.Conn, cip
 	return id, nil
 }
 
-func (r *InMemoryNodeRepository) Get(id string) *entities.Node {
+func (r *InMemoryNodeRepository) Get(id string) (*entities.Node, error) {
 	r.mu.Lock() // Pode ser necessário usar um mutex no Get também, dependendo do uso concorrente
 	defer r.mu.Unlock()
 	n, exists := r.data[id]
 	if !exists {
-		return nil
+		return nil, fmt.Errorf("node not found: %s", id)
 	}
-	return &n
+	return &n, nil
 }
 
 func (r *InMemoryNodeRepository) IDs() []string {
