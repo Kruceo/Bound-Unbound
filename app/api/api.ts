@@ -1,9 +1,9 @@
 import axios from 'axios'
 import dotenv from 'dotenv'
-import { PageContext } from 'vike/types'
 import * as endpoints from './endpoints'
 import { getPageContext } from 'vike/getPageContext'
 import { getContext } from 'telefunc'
+import { PageContext } from 'vike/types'
 dotenv.config()
 
 const port = process.env.API_PORT ?? "8080"
@@ -17,16 +17,15 @@ type BoundEndpoints<T> = {
 };
 
 export function apiUrl(pathRoute: string) {
-    console.log(pathRoute)
     return `${proto}://${address}:${port}${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
 }
 
-export function useAPI() {
-    let type: "telefunc" | "vike" | "" = ""
+export function useAPI(pg?: PageContext) {
+    let type: "telefunc" | "vike" | "none" = "none"
     let getFetcher = () => axios.create()
 
     try {
-        let pageContext = getPageContext()
+        let pageContext = pg??getPageContext()
         if (pageContext) {
             getFetcher = () => {
                 return axios.create({ headers: { "Authorization": pageContext.headers?.authorization } })
@@ -34,10 +33,10 @@ export function useAPI() {
             type = "vike"
         }
     } catch (err) {
-        console.log(err, "deu ruim")
+        // console.error(err)
     }
     // get credentials using context, from telefunc
-    if (type == "") {
+    if (type == "none") {
         getFetcher = () => {
             const context = getContext() as { sessionToken: string }
             return axios.create({ headers: { "Authorization": `Bearer ${context.sessionToken}` } })

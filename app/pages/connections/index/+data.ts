@@ -9,9 +9,12 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async (pg: PageContext) => {
   try {
-    const res = await useAPI().onGetNodes()
-    console.log(res)
-    return (res)
+    const api = useAPI()
+    const res = await   api.onGetNodes()
+    const f = await     api.onGetBinds()
+    const roles = await api.onGetRoles()
+    console.log(f)
+    return {nodes:res,binds:f,roles}
   }
   catch (error: any) {
     if (error.status == HttpStatusCode.Unauthorized)

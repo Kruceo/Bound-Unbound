@@ -247,8 +247,6 @@ export async function onRegisterAction(this: Fetcher, username: string, password
         console.log(error)
         return error.response.data
     }
-
-
 }
 
 
@@ -267,6 +265,44 @@ export async function onResetAccount(this: Fetcher, user: string, secretCode: st
         console.log(error)
         return error.response.data
     }
+}
 
 
+export async function onPostBind(this: Fetcher, binds: { nodeId: string, roleId: string }[]): Promise<ApiResponse<{ id: string }[]>> {
+    const url = apiUrl("/admin/roles/bind/nodes")
+
+    try {
+        const res = await this.axios.post(url, binds)
+
+        return res.data
+    } catch (error: any) {
+        console.log(error)
+        return error.response.data
+    }
+}
+
+export async function onGetBinds(this: Fetcher): Promise<ApiResponse<{ id: string, node:{id:string,name:string},role:{id:string,name:string,permissions:string[]} }[]>> {
+    const url = apiUrl("/admin/roles/bind/nodes")
+
+    try {
+        const res = await this.axios.get(url)
+        return res.data
+    } catch (error: any) {
+        console.log(error)
+        return error.response.data
+    }
+}
+
+export async function onDeleteBinds(this: Fetcher, ids: string[]): Promise<ApiResponse<boolean | undefined>> {
+    const url = apiUrl("/admin/roles/bind/nodes")
+
+    try {
+        const res = await this.axios.delete(url, {
+            data: ids.map(f => ({ id: f }))
+        })
+        return res.data
+    } catch (error: any) {
+        console.log(error)
+        return error.response.data
+    }
 }
