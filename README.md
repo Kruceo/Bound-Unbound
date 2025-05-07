@@ -2,6 +2,8 @@
 
 The project make the management of multiple Unbound servers easy, concentrating everything in one place.
 
+![](docs/images/2.png)
+
 ## Targets
 
 ### Important 
@@ -24,6 +26,7 @@ The project make the management of multiple Unbound servers easy, concentrating 
 - ❌ Change some host configuration remotely
 - ❌ Timed Rules
 - ❌ TOTP for two factor authentication
+- ❌ Statistics in dashboard
 
 ## Build
 
