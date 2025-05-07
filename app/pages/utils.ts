@@ -1,9 +1,9 @@
-
+import Cookies from "js-cookie"
 
 export type RecordTypes = "A" | "AAAA" | "TXT" | "CNAME" | "MX"
 
 export function inputPatternFor(type: RecordTypes) {
-    let result = undefined
+    let result:string|undefined = undefined
     switch (type) {
         case "A":
             result = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.source
@@ -26,4 +26,14 @@ export function inputPatternFor(type: RecordTypes) {
     }
 
     return result//?.replace(/\\/g,"\\\\")
+}
+
+export function userHasPermissions(...perms: string[]): boolean {
+    const userPerms = Cookies.get("permissions")?.split(",") || [];
+    return perms.every(perm => userPerms.includes(perm));
+}
+
+export function userHasAnyOfThesePermissions(...perms: string[]): boolean {
+    const userPerms = Cookies.get("permissions")?.split(",") || [];
+    return perms.some(perm => userPerms.includes(perm));
 }

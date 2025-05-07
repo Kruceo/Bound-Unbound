@@ -1,6 +1,9 @@
-import { AxiosError } from 'axios'
-import { useAPI, ApiResponse, apiUrl } from '../../api/api'
+import { ApiResponse, apiUrl, useAPI } from '../../api/api'
 
-const {onGetConfigHash,onBlockAction,onNewRedirectAction,onDeleteRedirectAction,onReloadActions,onUnblockAction} = useAPI()
-
-export {onBlockAction,onDeleteRedirectAction,onGetConfigHash,onNewRedirectAction,onReloadActions,onUnblockAction}
+export const {onGetConfigHash,onBlockAction,onNewRedirectAction,onDeleteRedirectAction,onReloadActions,onUnblockAction} = useAPI()
+export async function onGetBlocks(nodeId:string){
+    const url = apiUrl(`/v1/connections/${nodeId}/redirects`)
+  const res = await useAPI().axios.get(url)
+  const data = res.data as ApiResponse<{ from: string, to: string, recordType: string, localZone: boolean }[]>
+  return { redirects: data.data??[] };
+}

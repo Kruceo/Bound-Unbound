@@ -1,4 +1,4 @@
-import { navigate, reload } from "vike/client/router";
+import { reload } from "vike/client/router";
 import { onCreateRegisterRequest, onDeleteRoles, onDeleteUsers, onPostRoles } from "./+Page.telefunc";
 import { useContext, useState } from "react";
 import Ico from "../../components/Ico";
@@ -8,7 +8,7 @@ import Form, { FormBlock } from "../../components/Form";
 import { useData } from "vike-react/useData";
 import { Data } from "./+data";
 import Table from "../../components/Table";
-import { NotificationContext } from "../../layouts/NotificationContext";
+import { NotificationContext } from "../../components/NotificationContext";
 import { CopyButton } from "../../components/CopyButton";
 
 export default function () {
@@ -17,7 +17,6 @@ export default function () {
     const [selectedUsers, setSelectedUsers] = useState<string[]>([])
     const [DynamicComponent, setDynamicComponent] = useState(() => <></>)
     const data = useData() as Data
-
     async function deleteRolesHandler() {
         let res: any
         res = await onDeleteRoles(selectedRoles);
@@ -93,13 +92,11 @@ export default function () {
             </div>
             <Table select={{ setSelected: setSelectedRoles, selected: selectedRoles, uniqueKey: "id" }} data={data.roles} headers={[
                 { acessor: "name", name: "Name", width: 1 },
-                { acessor: "permissions", name: "Permission", customHandler(v) { return <div className="permissions">{v.map((e:string)=><span id={e}>{e}</span>)}</div> } }]
+                { acessor: "permissions", name: "Permission", customHandler(v) { return <div className="permissions">{v.map((e: string) => <span id={e}>{e}</span>)}</div> } }]
             } />
         </main>
     </>
 }
-
-
 
 function AddUserForm(props: { onCancel: () => void, onSubmit: () => void }) {
 
@@ -122,7 +119,7 @@ function AddUserForm(props: { onCancel: () => void, onSubmit: () => void }) {
 
     return <>{
         !route ?
-            <Form title="New User" desc="Adding new user." onCancel={props.onCancel} onSubmit={handler} >
+            <Form title="New User" desc="Setting up a new user profile. Please review the role selection carefully." onCancel={props.onCancel} onSubmit={handler} >
                 <FormBlock columns={1}>
                     <Select title="Role" required name="role" >
                         {data.roles.map(e => <option key={e.id} value={e.id}>{e.name} {e.permissions}</option>)}
@@ -161,7 +158,7 @@ function AddRoleForm(props: { onCancel: () => void, onSubmit: () => void }) {
         props.onSubmit()
     }
 
-    return <Form title="New Role" desc="Adding new role." onCancel={props.onCancel} onSubmit={handler} >
+    return <Form title="New Role" desc="Adding a new role to the system. Please ensure the permissions are configured correctly." onCancel={props.onCancel} onSubmit={handler} >
         <FormBlock columns={1}>
             <Input title="Name" name="name" required placeholder="Type a name"></Input>
         </FormBlock>
@@ -171,20 +168,16 @@ function AddRoleForm(props: { onCancel: () => void, onSubmit: () => void }) {
             <h3>Permissions</h3>
             <div className="perms">
                 <div className="permission">
-                    <input type="checkbox" name="permission" value={"admin"} />
-                    <span>Admin</span>
-                </div>
-                <div className="permission">
-                    <input type="checkbox" name="permission" value={"manage_users"} />
-                    <span>Manage users</span>
-                </div>
-                <div className="permission">
-                    <input type="checkbox" name="permission" value={"manage_nodes"} />
+                    <input type="checkbox" name="permission" value={"manage_nodes"} defaultChecked />
                     <span>Manage nodes</span>
                 </div>
                 <div className="permission">
                     <input type="checkbox" name="permission" value={"view_all_nodes"} />
                     <span>View all nodes</span>
+                </div>
+                <div className="permission">
+                    <input type="checkbox" name="permission" value={"manage_users"} />
+                    <span>Manage users</span>
                 </div>
                 {/* <div className="permission">
                     <input type="checkbox" name="permission" value={"t"} />

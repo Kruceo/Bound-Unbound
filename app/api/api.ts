@@ -17,7 +17,9 @@ type BoundEndpoints<T> = {
 };
 
 export function apiUrl(pathRoute: string) {
-    return `${proto}://${address}:${port}${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
+    const f = `${proto}://${address}:${port}${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
+    console.log("fetching",f)
+    return f
 }
 
 export function useAPI(pg?: PageContext) {
@@ -45,11 +47,9 @@ export function useAPI(pg?: PageContext) {
 
     const base = {
         get axios() {
-            console.log("getting fetcher")
             try {
                 return getFetcher()
             } catch (error) {
-                console.log("getting fallback fetcher")
                 return axios.create()
             }
         }

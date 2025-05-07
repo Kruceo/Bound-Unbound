@@ -1,11 +1,11 @@
 import { render } from "vike/abort";
 import { useAPI } from "../../api/api.js";
+import { PageContext } from "vike/types";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async () => {
     const api = useAPI()
-    
     const users = await api.onGetUsers()
     if (users.error || !users.data) {
         console.error("problem with users")
@@ -16,8 +16,6 @@ export const data = async () => {
         console.error("problem with roles")
         throw render(500)
     }
-
-    console.log(roles)
 
     return { users: users.data, roles: roles.data }
 };

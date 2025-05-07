@@ -6,7 +6,6 @@ type Fetcher = { axios: AxiosInstance }
 export async function onCreateRegisterRequest(this: Fetcher, role: string): Promise<CreateRegisterRequestResponse> {
     const url = apiUrl(`/auth/register/request`)
     try {
-        console.log({ roleId: role })
         const res = await this.axios.post(url, { roleId: role })
         return await res.data
     } catch (error) {
@@ -71,11 +70,20 @@ export async function onAuthToken(this: Fetcher) {
     try {
         const url = apiUrl("auth/token")
         const res = await this.axios.get(url)
+        const rawCookies = res.headers["set-cookie"]??[]
 
-        return { ok: res.status == 200, cookies: res.headers["set-cookie"] }
+        const cookieMap = new Map();
+
+        rawCookies.forEach(cookieStr => {
+            const [cookiePair] = cookieStr.split(";"); // Pega só a parte "chave=valor"
+            const [key, value] = cookiePair.split("=").map(s => s.trim());
+            cookieMap.set(key, value);
+        });
+
+        return { ok: res.status == 200, cookies: cookieMap, rawCookies }
     }
     catch (err: any) {
-        console.log(err.response.data)
+        console.error("error: authTokenW")
     }
     return { ok: false }
 }
@@ -164,7 +172,6 @@ export async function onReloadActions(this: Fetcher, connectionId: string): Prom
 export async function onGetNodes(this: Fetcher): Promise<ApiResponse<{ name: string, remoteAddress: string }[]>> {
     try {
         const url = apiUrl("/v1/connections")
-        console.log(this.axios.defaults.headers)
         const res = await this.axios.get(url)
         return res.data as ApiResponse<{ name: string, remoteAddress: string }[]>
     }
@@ -190,7 +197,6 @@ export async function onLoginAction(this: Fetcher, username: string, password: s
             User: username,
             Password: hashedPassword
         })
-        console.log(res.data)
         return res.data
     } catch (error: any) {
         return error.response.data
@@ -281,14 +287,14 @@ export async function onPostBind(this: Fetcher, binds: { nodeId: string, roleId:
     }
 }
 
-export async function onGetBinds(this: Fetcher): Promise<ApiResponse<{ id: string, node:{id:string,name:string},role:{id:string,name:string,permissions:string[]} }[]>> {
+export async function onGetBinds(this: Fetcher): Promise<ApiResponse<{ id: string, node: { id: string, name: string }, role: { id: string, name: string, permissions: string[] } }[]>> {
     const url = apiUrl("/admin/roles/bind/nodes")
 
     try {
         const res = await this.axios.get(url)
         return res.data
     } catch (error: any) {
-        console.log(error)
+        console.log("error:",error.message)
         return error.response.data
     }
 }
@@ -302,7 +308,7 @@ export async function onDeleteBinds(this: Fetcher, ids: string[]): Promise<ApiRe
         })
         return res.data
     } catch (error: any) {
-        console.log(error)
+        console.error("error:",error.message)
         return error.response.data
     }
 }

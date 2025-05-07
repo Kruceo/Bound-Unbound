@@ -32,16 +32,26 @@ export default function Page() {
               <p>{each.remoteAddress}</p>
               <p>Unbound</p>
               <div className="bottom-bar">
-                <button aria-label="Bind Node" data-balloon-pos="down" onClick={() => setDynamicComponent(<BindForm nodeId={each.remoteAddress} onCancel={clearDynamicComponent} onSubmit={clearDynamicComponent} ></BindForm>)} >
-                  <Ico>join</Ico>
-                </button>
-                <ControlsReloadButton nodeId={each.remoteAddress} updateIfItChanges={data} />
-                <Link aria-label="Domain Blocks" data-balloon-pos="down" className="button" href={`/connections/${each.remoteAddress}/blocks`}>
-                  <Ico>block</Ico>
-                </Link>
-                <Link aria-label="Domain Redirects" data-balloon-pos="down" className="button" href={`/connections/${each.remoteAddress}/redirects`}>
-                  <Ico>airline_stops</Ico>
-                </Link>
+                {
+                  data.user.permissions.includes("manage_users") ?
+                    <button aria-label="Bind Node" data-balloon-pos="down" onClick={() => setDynamicComponent(<BindForm nodeId={each.remoteAddress} onCancel={clearDynamicComponent} onSubmit={clearDynamicComponent} ></BindForm>)} >
+                      <Ico>join</Ico>
+                    </button>
+                    : null
+                }
+                {
+                  // data.permissions.includes("manage_nodes") ?
+                    <>
+                      <ControlsReloadButton nodeId={each.remoteAddress} updateIfItChanges={data} />
+                      <Link aria-label="Domain Blocks" data-balloon-pos="down" className="button" href={`/connections/${each.remoteAddress}/blocks`}>
+                        <Ico>block</Ico>
+                      </Link>
+                      <Link aria-label="Domain Redirects" data-balloon-pos="down" className="button" href={`/connections/${each.remoteAddress}/redirects`}>
+                        <Ico>airline_stops</Ico>
+                      </Link>
+                    </>
+                    // : null
+                }
               </div>
             </div>
           })

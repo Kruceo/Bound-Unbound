@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode, useState } from 'react';
-import BeautyBox from '../components/BeautyBox';
+import BeautyBox from './BeautyBox';
 import "./NotificationContext.less";
-import Ico from '../components/Ico';
+import Ico from './Ico';
 
 // Define the shape of our context
 interface NotificationContextType {
