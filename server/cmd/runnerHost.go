@@ -30,8 +30,8 @@ func Run() {
 	authMiddleware := middlewares.NewJWTMiddleware(enviroment.SESSION_SECRET).AuthMiddleware
 	corsMiddleware := middlewares.NewCorsMiddleware(enviroment.CORS_ORIGIN, "Authorization", "Content-Type", "Cookie").CorsMiddleware
 	bforceMiddleware := middlewares.NewBruteForceMiddleware().BruteForceMiddleware
-	adminPermMiddleware := middlewares.NewRoleMiddleware([]string{"admin"}, jwtUseCase, userRepo, roleRepo).Middleware
-	anyPermMiddleware := middlewares.NewRoleMiddleware([]string{"*"}, jwtUseCase, userRepo, roleRepo).Middleware
+	adminPermMiddleware := middlewares.NewRoleMiddleware([]string{"manage_users"}, jwtUseCase, userRepo, roleRepo).Middleware
+	anyPermMiddleware := middlewares.NewRoleMiddleware([]string{"manage_nodes"}, jwtUseCase, userRepo, roleRepo).Middleware
 
 	r := mux.NewRouter()
 	apiRouter := routers.SetupNodesRouter(r, &nodeRepo, &responseRepo, nodeRoleBindRepo, roleRepo)

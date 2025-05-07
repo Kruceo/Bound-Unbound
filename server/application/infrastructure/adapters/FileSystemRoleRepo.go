@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"server2/application/entities"
+	"server2/utils"
 	"sync"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ func NewFileRoleRepository(path string) *FileRoleRepository {
 		panic(err)
 	}
 
-	admin, err := entities.NewRole("0", "Admin", "read&write")
+	admin, err := entities.NewRole("0", "Admin", utils.ADMIN_PERMS...)
 	if err != nil {
 		panic(err)
 	}

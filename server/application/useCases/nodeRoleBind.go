@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"server2/application/entities"
 	"server2/application/infrastructure"
+	"server2/utils"
 )
 
 type NodeRoleBindPersistenceUseCase struct {
@@ -93,7 +94,7 @@ func (nr *NodeRoleBindPersistenceUseCase) GetNodesForRole(roleID string) ([]*ent
 		return nil, err
 	}
 
-	if role.HasPerm("admin") {
+	if role.HasPerm(utils.PERM_VIEW_ALL_NODES) {
 		ids := nr.nodes.IDs()
 		nodes := []*entities.Node{}
 		for _, v := range ids {

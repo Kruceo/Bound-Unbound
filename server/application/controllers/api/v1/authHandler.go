@@ -143,10 +143,6 @@ func (a *v1AuthHandlers) AuthRegisterHandler(w http.ResponseWriter, r *http.Requ
 
 	var newUserRoleID string = "0"
 	if userCount > 0 {
-		// change this to use a routeRepe entry
-		// first registered user is a admin
-		// and this admin can create route repo entries to other users register in this
-
 		storedRoleID, routeExists := a.routesRepo.Exists(b.RouteId)
 		if !routeExists {
 			a.fastErrorResponses.Execute(w, r, "NOT_FOUND", http.StatusNotFound)

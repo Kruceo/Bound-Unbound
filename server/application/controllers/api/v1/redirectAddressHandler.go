@@ -38,20 +38,24 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 	if r.Method == "GET" {
-		id := fmt.Sprintf("%x", rand.Int())
+		fmt.Println("getting redirects")
+		id := fmt.Sprintf("%x_%x", rand.Int(), rand.Int())
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list redirects", id), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
+
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
+
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
-
+		fmt.Println("waiting for response....", id)
 		err = bh.responseRepo.WaitForResponse(id)
+		fmt.Println("replied")
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
@@ -106,7 +110,6 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		if b.LocalZone {
 			localzoneStr = "local-zone"
 		}
-		// client.Send(/, true)
 
 		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), client.Cipher)
 
