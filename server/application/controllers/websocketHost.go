@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"server2/application/infrastructure"
 
@@ -135,33 +136,35 @@ func (wsc *HostController) SendConnectToNode(nodeId string) error {
 	err = node.Conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, "host")))
 	return err
 }
-
 func (wsc *HostController) OnMessageHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := wsc.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("WebSocket upgrade error:", err)
 		return
 	}
+	defer conn.Close()
+
+	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	conn.SetPongHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		return nil
+	})
+
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println("Read error:", err)
 			findedNode, err := wsc.nodePersistence.FindOneByRemoteAddress(conn.RemoteAddr().String())
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			err = wsc.nodePersistence.Delete(findedNode.ID)
-			if err != nil {
-				fmt.Println("delete error:", err)
-				continue
+			if err == nil {
+				_ = wsc.nodePersistence.Delete(findedNode.ID)
 			}
 			break
 		}
+		// go func() {
 
 		if err := wsc.ExecuteStringAsCommand(string(msg), conn); err != nil {
 			fmt.Println("Command error:", err)
-			break
 		}
+		// }()
 	}
 }

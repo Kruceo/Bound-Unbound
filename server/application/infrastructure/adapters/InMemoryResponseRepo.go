@@ -15,30 +15,33 @@ type InMemoryResponseRepository struct {
 func (r *InMemoryResponseRepository) Set(id string, data string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.data[id] = data
-	if _, exists := r.channels[id]; !exists {
-		r.channels[id] = make(chan string)
-	}
 
-	r.channels[id] <- id
+	select {
+	case r.channels[id] <- id:
+		r.data[id] = data
+	case <-time.After(2 * time.Second):
+		return fmt.Errorf("timeout to set response: %s", id)
+	}
 	return nil
 }
 
 func (r *InMemoryResponseRepository) WaitForResponse(id string) error {
 	r.mu.Lock()
 	if _, exists := r.channels[id]; !exists {
-		r.channels[id] = make(chan string, 1)
+		fmt.Println("criando canal no waitresponse")
+		r.channels[id] = make(chan string, 2)
 	}
+	fmt.Println("passou daqui")
 	ch := r.channels[id]
 	r.mu.Unlock()
 
 	go func() {
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 		ch <- "_TIMEOUT_" + id
 	}()
 
 	for v := range ch {
-		// fmt.Println(v, id)
+		fmt.Println("channel kkk", v, id)
 		if v == id {
 			return nil
 		}
