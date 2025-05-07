@@ -6,7 +6,6 @@ export default function LayoutWithoutBar({ children }: { children: React.ReactNo
     return (
       <div
         style={{
-          background:"red",
           display: "flex",
           maxWidth: "100%",
           margin: "0px",
