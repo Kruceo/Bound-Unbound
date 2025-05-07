@@ -1,11 +1,11 @@
 {
   "scripts": {
-    "dev": "vite --host",
+    "dev": "bun server.ts",
     "build": "vike build",
-    "preview": "vike preview"
+    "prod": "NODE_ENV=production bun server.ts"
   },
   "dependencies": {
-    "@types/js-cookie": "^3.0.6",
+
     "@vitejs/plugin-react": "^4.3.4",
     "axios": "^1.8.3",
     "cookie-parser": "^1.4.7",
@@ -21,6 +21,7 @@
     "vike-react": "^0.5.13"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "typescript": "^5.7.3",
     "vite": "^6.1.1",
     "@types/react": "^19.0.10",
