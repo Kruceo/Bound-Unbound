@@ -2,7 +2,6 @@ import { redirect } from "vike/abort";
 import { useAPI } from "../api/api";
 
 const f = async (f: any) => {
-    console.log("using 'onBeforeRender.ts'")
     try {
         // const pg = usePageContext()
         const api = useAPI()

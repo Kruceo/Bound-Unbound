@@ -71,7 +71,6 @@ function BindForm(props: { onCancel: () => void, onSubmit: () => void, nodeId: s
     const newBindWithRoles = e.getAll('role')
     const toRemoveBinds = e.getAll('remove-bind')
     if (toRemoveBinds.length > 0) {
-      console.log(toRemoveBinds)
       await onDeleteBinds(toRemoveBinds.map(t => t.toString()))
     }
     if (newBindWithRoles.length > 0)

@@ -40,7 +40,6 @@ export default function Page() {
           break;
 
         default:
-          console.log(console.error(re))
           setProblem("Unknown problem")
           break;
       }

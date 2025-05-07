@@ -18,7 +18,6 @@ type BoundEndpoints<T> = {
 
 export function apiUrl(pathRoute: string) {
     const f = `${proto}://${address}:${port}${(pathRoute.startsWith("/") ? "" : "/")}${pathRoute}`
-    console.log("fetching",f)
     return f
 }
 

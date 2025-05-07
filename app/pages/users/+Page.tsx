@@ -109,7 +109,6 @@ function AddUserForm(props: { onCancel: () => void, onSubmit: () => void }) {
         if (!role) return alert("no role");
         //   await onBlockAction(data.nodeId, domain.toString().split(","))
         const res = await onCreateRegisterRequest(role.toString())
-        console.log(res)
         if (res.error && res.errorCode) {
             spawnNotification(res.errorCode)
             return
@@ -147,9 +146,7 @@ function AddRoleForm(props: { onCancel: () => void, onSubmit: () => void }) {
         const permssions = data.getAll('permission')
         if (!name) return alert("no name");
         const role = { name: name.toString(), permissions: permssions.map(e => e.toString()) }
-        console.log(role)
         const res = await onPostRoles([role])
-        console.log("dsda", res)
         if (res.error) {
             spawnNotification(res.errorCode ?? "Unknown Error")
             props.onCancel();
