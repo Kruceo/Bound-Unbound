@@ -36,15 +36,18 @@ func Run() {
 	}
 	for {
 		if !controller.HasConnection() {
-			fmt.Println("trying connection")
 			controller.SetConnection(connectWebsocket(enviroment.MAIN_SERVER_ADDRESS))
 			go func() {
 				if !controller.HasConnection() {
 					return
 				}
-				controller.Connect()
+				err := controller.Connect()
+				if err != nil {
+					fmt.Println("key share error:", err)
+				}
 			}()
 			if !controller.HasConnection() {
+				fmt.Println("no connection")
 				time.Sleep(3 * time.Second)
 			}
 			continue

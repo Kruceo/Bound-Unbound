@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"server2/application/presentation"
-	usecases "server2/application/useCases"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -30,30 +29,33 @@ type RedirectR struct {
 }
 
 func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.Request) {
-	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
+	roleID := r.Header.Get("X-Role-ID")
+	client, err := bh.nodeRoleBindUseCase.GetAndCheckNode(connectionName, roleID)
+	if err != nil {
+		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
+		return
+	}
 	if r.Method == "GET" {
-		client := getNode.Execute(connectionName)
-		if client == nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
-		id := fmt.Sprintf("%x", rand.Int())
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list redirects", id), &client.Cipher)
+		fmt.Println("getting redirects")
+		id := fmt.Sprintf("%x_%x", rand.Int(), rand.Int())
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s list redirects", id), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
 			return
 		}
+
 		err = client.Conn.WriteMessage(websocket.TextMessage, encryptedMessage)
+
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
 		}
-
+		fmt.Println("waiting for response....", id)
 		err = bh.responseRepo.WaitForResponse(id)
+		fmt.Println("replied")
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "NODE_RESPONSE", http.StatusInternalServerError)
 			return
@@ -88,14 +90,8 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(decoded)
 		return
 	} else if r.Method == "POST" {
-		client := getNode.Execute(connectionName)
-		if client == nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
 		var body []byte
-		body, err := io.ReadAll(r.Body)
+		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
@@ -114,9 +110,8 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		if b.LocalZone {
 			localzoneStr = "local-zone"
 		}
-		// client.Send(/, true)
 
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), &client.Cipher)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s redirect %s %s %s %s", id, b.From, b.RecordType, b.To, localzoneStr), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)
@@ -136,14 +131,8 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		w.Write(nil)
 		return
 	} else if r.Method == "DELETE" {
-		client := getNode.Execute(connectionName)
-		if client == nil {
-			bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
-			return
-		}
-
 		var body []byte
-		body, err := io.ReadAll(r.Body)
+		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "READ_BODY", http.StatusInternalServerError)
 			return
@@ -158,7 +147,7 @@ func (bh *V1APIHandlers) RedirectAddressHandler(w http.ResponseWriter, r *http.R
 		}
 
 		id := fmt.Sprintf("%X", rand.Int())
-		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unredirect %s", id, b.Domain), &client.Cipher)
+		encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s unredirect %s", id, b.Domain), client.Cipher)
 
 		if err != nil {
 			bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)

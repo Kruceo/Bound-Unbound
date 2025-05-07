@@ -1,10 +1,16 @@
 package infrastructure
 
-import "server2/application/entities"
+import (
+	"crypto/cipher"
+	"server2/application/entities"
+
+	"github.com/gorilla/websocket"
+)
 
 type NodeRepository interface {
-	Save(node entities.Node) (string, error)
-	Get(id string) *entities.Node
+	Save(id, name string, conn *websocket.Conn, cipher *cipher.AEAD) (string, error)
+	Get(id string) (*entities.Node, error)
+	FindOneByRemoteAddress(remoteAddr string) (*entities.Node, error)
 	Delete(id string) error
 	IDs() []string
 }
@@ -50,4 +56,13 @@ type RoleRepository interface {
 	CreateIfNotExists(*entities.Role) (bool, error)
 	NextID() (string, error)
 	Count() (int, error)
+}
+
+type NodeRoleBindRepository interface {
+	Save(id, nodeID, roleID string) error
+	Get(id string) (*entities.RoleNodeBind, error)
+	GetAll(limit int) ([]*entities.RoleNodeBind, error)
+	Delete(id string) error
+	Update(id, nodeID, roleID string) error
+	NextID() (string, error)
 }

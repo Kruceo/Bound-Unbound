@@ -8,7 +8,7 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 export const data = async (pageContext: PageContextServer) => {
   const url = apiUrl(`/v1/connections/${pageContext.routeParams.id}/redirects`)
- const res = await useAPI().axios.get(url)
+  const res = await useAPI().axios.get(url)
   if (res.status == axios.HttpStatusCode.Unauthorized) {
     throw redirect("/auth/signin")
   }

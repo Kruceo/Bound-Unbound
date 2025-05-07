@@ -2,3 +2,7 @@ unbound
 .env
 userdata
 *.test
+
+.ID
+*temp*
+*.old

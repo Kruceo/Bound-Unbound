@@ -42,7 +42,8 @@ func (j *JWTMiddleware) test(w http.ResponseWriter, r *http.Request) (*jwt.Token
 		return nil, fmt.Errorf("jwt address does not match with request address")
 	}
 
-	r.Header.Add("UserID", user)
+	r.Header.Add("user-id", user)
+	// r.Header.Add("role-id", user)
 
 	return token, nil
 }

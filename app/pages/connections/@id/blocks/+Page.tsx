@@ -8,7 +8,8 @@ import Ico from "../../../../components/Ico.jsx";
 import ControlsReloadButton from "../../../../components/ControlsReloadButton.jsx";
 import Input from "../../../../components/Input.jsx";
 import { inputPatternFor } from "../../../utils.js";
-import Table, { TableCell, TableRow } from "../../../../components/Table.jsx";
+import Table from "../../../../components/Table.jsx";
+import Form, { FormBlock } from "../../../../components/Form.jsx";
 export default function Page() {
   const data = useData<Data>();
   const [selected, setSelected] = useState<(string)[]>([])
@@ -44,24 +45,18 @@ export default function Page() {
 
 function AddAddressForm(props: { onCancel: () => void, onSubmit: () => void }) {
   const data = useData<Data>()
-  return <form className="add-form" action="" onSubmit={async (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-
+  return <Form 
+    title="Blocking"
+    desc="This will block all requests to the selected domain." onCancel={props.onCancel} onSubmit={async (formData) => {
+    
     const domain = formData.get('domain')
     if (!domain) return alert("no domain");
     await onBlockAction(data.nodeId, domain.toString().split(","))
     props.onSubmit()
 
   }}>
-    <h2>Blocking</h2>
-    <p>This will block all requests to the selected domain.</p>
-    <div className="inputs">
+    <FormBlock columns={1}>
       <Input title="Domain" required type="text" placeholder="domain.com" pattern={inputPatternFor("CNAME")} name="domain" />
-    </div>
-    <div className="b-dock">
-      <button onClick={props.onCancel} type="reset" >Cancel</button>
-      <button type="submit">Block</button>
-    </div>
-  </form>
+    </FormBlock>
+  </Form>
 }

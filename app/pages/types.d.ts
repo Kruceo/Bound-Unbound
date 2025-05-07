@@ -1,23 +1,14 @@
-interface APIResponse<T = any> {
-    error?: false, errorCode?: string, message: string, data?: T
+// types/vike.d.ts ou global.d.ts
+import {PageContextClient,PageContextServer} from "vike/types";
+
+import onBeforeRender from './+onBeforeRender';
+
+type OnBeforeRenderResult = Awaited<ReturnType<typeof onBeforeRender>>['pageContext']['data'];
+
+declare module 'vike/types' {
+  type PageContext<Data = OnBeforeRenderResult> = PageContextClient<Data> | PageContextServer<Data>;
 }
 
-interface ConfigHashResponse extends APIResponse {
-    data?: { Hash: string }
-}
-
-interface CreateRegisterRequestResponse extends APIResponse {
-    data?: { routeId: string }
-}
-
-interface GetUsersResponse extends APIResponse {
-    data?: { name: string, role: { id: string, name: string, permissions: string[] } }[]
-}
-
-interface OnGetRolesResponse extends APIResponse {
-    data?: { name: string, permissions: string[],id:string }[]
-}
-
-interface OnPostRolesResponse extends APIResponse {
-    data?: { name: string, permissions: string[], id: string }[]
+declare module 'vike-react/useData' {
+  export function useData<Data>(): Data & OnBeforeRenderResult; 
 }

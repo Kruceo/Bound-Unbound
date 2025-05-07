@@ -3,7 +3,7 @@ import type { Data } from "./+data.js";
 import "./Page.less"
 import { useEffect, useState } from "react";
 import { navigate, reload } from "vike/client/router";
-import { onDeleteRedirectAction, onGetConfigHash, onNewRedirectAction, onReloadActions } from '../../actions.telefunc.js'
+import { onDeleteRedirectAction, onGetBlocks, onGetConfigHash, onNewRedirectAction, onReloadActions } from '../../actions.telefunc.js'
 import Ico from "../../../../components/Ico.jsx";
 import Input, { Select } from "../../../../components/Input.jsx";
 import { inputPatternFor, RecordTypes } from "../../../utils.js";
@@ -31,7 +31,6 @@ export default function Page() {
           <ControlsReloadButton nodeId={data.nodeId} updateIfItChanges={data} />
         </div>
       </div>
-
       {/* {data.blockedNames.length} */}
       <Table
         select={{ selected, setSelected, uniqueKey: "from" }}

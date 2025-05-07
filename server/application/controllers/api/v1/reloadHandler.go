@@ -5,8 +5,6 @@ import (
 	"math/rand"
 	"net/http"
 
-	usecases "server2/application/useCases"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -17,19 +15,17 @@ func (bh *V1APIHandlers) ReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	getNode := usecases.GetNodeUseCase{Repo: &bh.nodeRepo}
-
 	vars := mux.Vars(r)
 	connectionName := vars["connection"]
 
-	client := getNode.Execute(connectionName)
-	if client == nil {
+	client, err := bh.nodePersistenceUseCase.Get(connectionName)
+	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "UNKNOWN_NODE", http.StatusNotFound)
 		return
 	}
 	id := fmt.Sprintf("%x", rand.Int())
 
-	encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s reload", id), &client.Cipher)
+	encryptedMessage, err := cipherMessage.Execute(fmt.Sprintf("%s reload", id), client.Cipher)
 
 	if err != nil {
 		bh.fastErrorResponses.Execute(w, r, "CONNECTION_SECURITY", http.StatusInternalServerError)

@@ -46,24 +46,17 @@ func (r *Role) Validate() error {
 	}
 	for _, p := range r.Permissions {
 		if len(p) < 3 || len(p) > 50 {
-			return fmt.Errorf("Permission '%s' must be between 3 and 50 characters", p)
+			return fmt.Errorf("permission '%s' must be between 3 and 50 characters", p)
 		}
 	}
 	return nil
 }
 
-// CreateRole creates a new role with validation.
-func CreateRole(id, name string, permissions ...string) (*Role, error) {
-	newRole, err := NewRole(id, name, permissions...)
-	if err != nil {
-		return nil, err
+func (r *Role) HasPerm(str string) bool {
+	for _, v := range r.Permissions {
+		if v == str {
+			return true
+		}
 	}
-
-	// Validate the created role
-	err = newRole.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	return newRole, nil
+	return false
 }

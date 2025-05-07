@@ -15,6 +15,7 @@ type HandleCommandsUseCase struct {
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
+	fmt.Println("command", command.String())
 	if command.IsEncrypted {
 		if command.Entry == "add" {
 			return commands.Add(command.Id, command.Args, r.ResponseRepo)

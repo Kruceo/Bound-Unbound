@@ -21,6 +21,7 @@ const IsHost = false
 
 type WebsocketClientController struct {
 	name                 string
+	nodeID               *usecases.NodeIDUseCase
 	responseRepo         infrastructure.ResponsesReporisory
 	cipherCreation       security.CiphersUseCase
 	publicKey            *ecdh.PublicKey
@@ -38,6 +39,7 @@ func NewWebsocketClientController(name string, hostConn *websocket.Conn, respons
 	skuc := security.NewCreateSharedKeyUseCase(*privateKey)
 	return WebsocketClientController{
 		name:                 name,
+		nodeID:               usecases.NewNodeIDUseCase(),
 		responseRepo:         responseRepo,
 		handleCommands:       handleCommands,
 		cipherCreation:       cuc,
@@ -58,7 +60,6 @@ func (wsc *WebsocketClientController) ExecuteStringAsCommand(cmdStr string) erro
 	fmt.Printf("[received %v] %s\n", command.IsEncrypted, command.String())
 
 	if command.Entry == "connect" && len(command.Args) >= 2 {
-		fmt.Println("connecting")
 		sharedKey, err := wsc.sharedKeyCreation.Execute(command.Args[0])
 		if err != nil {
 			return err
@@ -77,8 +78,14 @@ func (wsc *WebsocketClientController) ExecuteStringAsCommand(cmdStr string) erro
 
 func (wsc *WebsocketClientController) Connect() error {
 	fmt.Println("connecting with host")
+	thisNodeID, err := wsc.nodeID.ReadOrCreateFile()
+
+	if err != nil {
+		return err
+	}
+
 	var encodedPublicKey = base64.RawStdEncoding.EncodeToString(wsc.publicKey.Bytes())
-	err := wsc.hostConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s", encodedPublicKey, wsc.name)))
+	err = wsc.hostConn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("_ connect %s %s %s", encodedPublicKey, thisNodeID, wsc.name)))
 	return err
 
 }

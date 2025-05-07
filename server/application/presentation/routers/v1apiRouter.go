@@ -7,9 +7,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func SetupNodesRouter(r *mux.Router, nodeRepo infrastructure.NodeRepository, responseRepo infrastructure.ResponsesReporisory) *mux.Router {
+func SetupNodesRouter(r *mux.Router, nodeRepo infrastructure.NodeRepository, responseRepo infrastructure.ResponsesReporisory, nodeRoleRepo infrastructure.NodeRoleBindRepository, roleRepo infrastructure.RoleRepository) *mux.Router {
 
-	apiController := v1.NewV1Handlers(nodeRepo, responseRepo)
+	apiController := v1.NewV1Handlers(nodeRepo, nodeRoleRepo, roleRepo, responseRepo)
 	router := r.PathPrefix("/v1").Subrouter()
 
 	router.HandleFunc("/connections", apiController.ConnectionsHandler).Methods("GET")

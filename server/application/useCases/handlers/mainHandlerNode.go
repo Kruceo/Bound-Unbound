@@ -15,6 +15,7 @@ type HandleCommandsUseCase struct {
 }
 
 func (r *HandleCommandsUseCase) Execute(command entities.Command) (string, error) {
+	fmt.Print("command", command.String())
 	if command.IsEncrypted {
 		switch command.Entry {
 		case "block":

@@ -2,6 +2,8 @@
 
 The project make the management of multiple Unbound servers easy, concentrating everything in one place.
 
+![](docs/images/2.png)
+
 ## Targets
 
 ### Important 
@@ -14,16 +16,17 @@ The project make the management of multiple Unbound servers easy, concentrating 
 
 
 ### Side Targets
-- ✅ Block multiple login requests
-- ✅ Store client ip in JWT and compare with client request 
+- ✅ Block brute-force login requests
 - ✅ Password reset method
-- ❌ Multiple users, with custom roles and nodes assigned to each
-- ❌ Admin will create "links" to other other person create a guest user
+- ✅ Multiple users, with custom roles and nodes assigned to each
+- ✅ Admin can create "links" to another signup
+- ❌ Refactor 'old' code.
 - ❌ Verify if unbound is running after a server reload, if not, restore last config file
 - ❌ Modify Unbound configuration remotely
 - ❌ Change some host configuration remotely
 - ❌ Timed Rules
 - ❌ TOTP for two factor authentication
+- ❌ Statistics in dashboard
 
 ## Build
 

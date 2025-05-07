@@ -1,8 +1,12 @@
 package adapters
 
 import (
+	"crypto/cipher"
+	"fmt"
 	"server2/application/entities"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type InMemoryNodeRepository struct {
@@ -10,23 +14,22 @@ type InMemoryNodeRepository struct {
 	mu   sync.Mutex
 }
 
-func (r *InMemoryNodeRepository) Save(node entities.Node) (string, error) {
+func (r *InMemoryNodeRepository) Save(id, name string, conn *websocket.Conn, cipher *cipher.AEAD) (string, error) {
 	// id := fmt.Sprintf("%x", rand.Uint32())
-	id := node.Conn.RemoteAddr().String()
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.data[id] = node
+	r.data[id] = *entities.NewNode(id, name, conn, cipher)
 	return id, nil
 }
 
-func (r *InMemoryNodeRepository) Get(id string) *entities.Node {
+func (r *InMemoryNodeRepository) Get(id string) (*entities.Node, error) {
 	r.mu.Lock() // Pode ser necessário usar um mutex no Get também, dependendo do uso concorrente
 	defer r.mu.Unlock()
 	n, exists := r.data[id]
 	if !exists {
-		return nil
+		return nil, fmt.Errorf("node not found: %s", id)
 	}
-	return &n
+	return &n, nil
 }
 
 func (r *InMemoryNodeRepository) IDs() []string {
@@ -40,6 +43,15 @@ func (r *InMemoryNodeRepository) IDs() []string {
 func (r *InMemoryNodeRepository) Delete(id string) error {
 	delete(r.data, id)
 	return nil
+}
+
+func (r *InMemoryNodeRepository) FindOneByRemoteAddress(remoteAddr string) (*entities.Node, error) {
+	for _, v := range r.data {
+		if v.Conn.RemoteAddr().String() == remoteAddr {
+			return &v, nil
+		}
+	}
+	return nil, fmt.Errorf("node not found: %s", remoteAddr)
 }
 
 func NewInMemoryNodeRepository() InMemoryNodeRepository {
